@@ -95,7 +95,6 @@ def squarize(doc, img, clsnameBeginning=""):
 
     return tmpImg
 
-
 def getOrderedNotesAnnotations(doc, cuts):
 
     notes = []
@@ -119,8 +118,6 @@ def getOrderedNotesAnnotations(doc, cuts):
         notes[i] = sorted(notes[i], key=lambda x: x.left)
 
     return notes
-
-
 
 def preprocessStaffLines(imgStaff, numLines):
     img = copy.deepcopy(imgStaff)
@@ -177,7 +174,6 @@ def addNotesCenter(imgStaff, doc):
 
     return img
 
-
 def getNotesPositions(imgStaff, imgStaffLedgers, notesAnnotations, limits):
 
     notesPositions = []
@@ -198,7 +194,6 @@ def getNotesPositions(imgStaff, imgStaffLedgers, notesAnnotations, limits):
         notesPositions.append(notesPos)
 
     return notesPositions
-
 
 def isInsideStaff(annotation, limits):
     # TODO cambiare/aggiungere implementazione (guardando XML)
@@ -257,17 +252,14 @@ CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
 
 cropobject_fnames = [os.path.join(CROPOBJECT_DIR, f) for f in os.listdir(CROPOBJECT_DIR)]
 
-# giusto per far prima
-docsNumber = 5
-cropobject_fnames = cropobject_fnames[:docsNumber]
+#giusto per far prima
+#docsNumber = 5
+cropobject_fnames = cropobject_fnames
 
 docs = [parse_cropobject_list(f) for f in cropobject_fnames]
 
-for docID in range(docsNumber):
-
+for docID in range(len(docs)):
     doc = docs[docID]
-
-    print(doc[0].uid)
 
     w = doc[0].uid[31:33]
     p = doc[0].uid[36:38]
@@ -283,38 +275,19 @@ for docID in range(docsNumber):
     pentasSeparators = getPentasSeparators(horizontalProjection)
     pentasLimits = getPentasLimits(horizontalProjection)
 
+    #notesAnnotations = getOrderedNotesAnnotations(doc, pentasSeparators)
 
-    notesAnnotations = getOrderedNotesAnnotations(doc, pentasSeparators)
-
-    print(notesAnnotations)
-    
-    # sums = sums.tolist()
-    # 
-    # plt.plot(sums)
+    # plt.plot(sums.tolist())
     # plt.show()
 
     # TODO preprocess staff: completare staff + aggiunta ledger
-    imgStaff = preprocessStaffLines(imgStaff, (len(pentasSeparators) - 1) * 5)
-    imgStaffLedgers = addLedgers(imgStaff, doc)
-    #imgStaff = addNotesCenter(imgStaff, doc)
-
-
-    plt.imshow(imgStaff, cmap="gray")
-    plt.show()
+    # imgStaff = preprocessStaffLines(imgStaff, (len(pentasSeparators) - 1) * 5)
+    # imgStaffLedgers = addLedgers(imgStaff, doc)
+    #
+    # plt.imshow(imgStaff, cmap="gray")
+    # plt.show()
 
     # TODO trasforma annotazioni in informazione sulla posizione
-    notesPositions = getNotesPositions(imgStaff, imgStaffLedgers, notesAnnotations, pentasLimits)
-    
+    #notesPositions = getNotesPositions(imgStaff, imgStaffLedgers, notesAnnotations, pentasLimits)
 
 exit(0)
-
-print(imgStaffPath)
-
-print(len(docs[0]))
-
-# 0,0
-# 766,1860
-# 767,1860
-print("img(0,0): " + str(imgStaff[0][0]))
-print("img(766,1860): " + str(imgStaff[766][1860]))
-print("img(767,1860): " + str(imgStaff[767][1860]))
