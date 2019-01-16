@@ -1,5 +1,8 @@
 import copy
 import os
+import random
+
+import cv2
 from muscima.io import parse_cropobject_list
 
 import numpy as np
@@ -246,48 +249,106 @@ def insideStaffPosition(imgStaff, annotation, stopValue):
 def outsideStaffPosition(imgStaff, annotation, stopValue):
     pass
 
-# TODO capire differenza tra i due XML
-CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
-# CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
+def getStaffsFromImage(img):
+    horizontalProjection = np.sum(img, axis=1)
+    pentasSeparators = getPentasSeparators(horizontalProjection)
+    staffs = []
 
-cropobject_fnames = [os.path.join(CROPOBJECT_DIR, f) for f in os.listdir(CROPOBJECT_DIR)]
+    for i in range(len(pentasSeparators) - 1):
+        staff = img[pentasSeparators[i] : pentasSeparators[i+1]]
+        staffs.append(staff)
 
-#giusto per far prima
-#docsNumber = 5
-cropobject_fnames = cropobject_fnames
+    return staffs
 
-docs = [parse_cropobject_list(f) for f in cropobject_fnames]
 
-for docID in range(len(docs)):
-    doc = docs[docID]
+def resizePatch(patch, w, h):
+    return cv2.resize(patch, dsize=(w, h), interpolation=cv2.INTER_AREA)
 
-    w = doc[0].uid[31:33]
-    p = doc[0].uid[36:38]
-    
+
+def getPatchesFromStaff(staff, w, h):
+    patches = []
+    l = len(staff)
+
+    transpStaff = staff.transpose()
+    n = int(staff.shape[1] / l)
+    for i in range(n):
+        patch = transpStaff[i*l : (i+1)*l].transpose()
+        patch = resizePatch(patch, w, h)
+        patches.append(patch)
+
+        iRand = random.randint(0, staff.shape[1]-l)
+        patch = transpStaff[iRand : iRand+l].transpose()
+        patch = resizePatch(patch, w, h)
+        patches.append(patch)
+
+
+    return patches
+
+def ciclone():
+    # TODO capire differenza tra i due XML
+    CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
+    # CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
+
+    cropobject_fnames = [os.path.join(CROPOBJECT_DIR, f) for f in os.listdir(CROPOBJECT_DIR)]
+
+    # giusto per far prima
+    # docsNumber = 5
+    cropobject_fnames = cropobject_fnames
+
+    docs = [parse_cropobject_list(f) for f in cropobject_fnames]
+
+    for docID in range(len(docs)):
+        doc = docs[docID]
+
+        w = doc[0].uid[31:33]
+        p = doc[0].uid[36:38]
+
+        imgPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
+        imgStaffPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
+
+        # img = mpimg.imread(imgPath)
+        imgStaff = mpimg.imread(imgStaffPath)
+
+        horizontalProjection = np.sum(imgStaff, axis=1)
+
+        pentasSeparators = getPentasSeparators(horizontalProjection)
+        pentasLimits = getPentasLimits(horizontalProjection)
+
+        # notesAnnotations = getOrderedNotesAnnotations(doc, pentasSeparators)
+
+        # plt.plot(sums.tolist())
+        # plt.show()
+
+        # TODO preprocess staff: completare staff + aggiunta ledger
+        # imgStaff = preprocessStaffLines(imgStaff, (len(pentasSeparators) - 1) * 5)
+        # imgStaffLedgers = addLedgers(imgStaff, doc)
+        #
+        # plt.imshow(imgStaff, cmap="gray")
+        # plt.show()
+
+        # TODO trasforma annotazioni in informazione sulla posizione
+        # notesPositions = getNotesPositions(imgStaff, imgStaffLedgers, notesAnnotations, pentasLimits)
+
+    exit(0)
+
+
+# TODO aggiungere notazioni a patches
+# TODO funzione che prende (upper, lower) e restituisce la classe, ovvero un intero appartenente a [-5, 5]
+if __name__ == "__main__":
+    w = "01"
+    p = "10"
+
     imgPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
     imgStaffPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
 
-    #img = mpimg.imread(imgPath)
-    imgStaff = mpimg.imread(imgStaffPath)
+    img = mpimg.imread(imgPath)
 
-    horizontalProjection = np.sum(imgStaff, axis=1)
+    staffs = getStaffsFromImage(img)
 
-    pentasSeparators = getPentasSeparators(horizontalProjection)
-    pentasLimits = getPentasLimits(horizontalProjection)
+    for staff in staffs:
+        patches = getPatchesFromStaff(staff, 128, 128)
+        for patch in patches:
+            plt.imshow(patch, cmap="gray")
+            plt.show()
 
-    #notesAnnotations = getOrderedNotesAnnotations(doc, pentasSeparators)
 
-    # plt.plot(sums.tolist())
-    # plt.show()
-
-    # TODO preprocess staff: completare staff + aggiunta ledger
-    # imgStaff = preprocessStaffLines(imgStaff, (len(pentasSeparators) - 1) * 5)
-    # imgStaffLedgers = addLedgers(imgStaff, doc)
-    #
-    # plt.imshow(imgStaff, cmap="gray")
-    # plt.show()
-
-    # TODO trasforma annotazioni in informazione sulla posizione
-    #notesPositions = getNotesPositions(imgStaff, imgStaffLedgers, notesAnnotations, pentasLimits)
-
-exit(0)
