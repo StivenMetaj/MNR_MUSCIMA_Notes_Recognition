@@ -10,18 +10,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-# TODO ordine note
-# TODO in quale rigo o spazio si trova la nota
+#Ritorna la proiezione orizzontale. In input si ha l'immagine target
+def getHorizontalProjection(img):
+    return np.sum(img, axis=1)
 
+#Ritorna il numero di linee di una immagine di Staff. In input si ha l'immagine target
+def getNumLines(imgStaff):
+    horProj = getHorizontalProjection(imgStaff)
+    pentasSeparators = getPentasSeparators(horProj)
+    return (len(pentasSeparators) - 1) * 5
 
-def getPentasSeparators(sums):
-    th = np.max(sums) / 2
+#Ritorna le posizioni dei separatori dei pentagrammi
+#In input si ha la proiezione orizzontale di una immagine
+def getPentasSeparators(horizontalProjection):
+    th = np.max(horizontalProjection) / 2
     peak = False
     count = 0
     cuts = []
     previousEnd = 0
     y = 0
-    for s in sums:
+
+    for s in horizontalProjection:
         if s > th:
             if not peak and count == 0:
                 # salita
@@ -37,20 +46,21 @@ def getPentasSeparators(sums):
                     previousEnd = y
                     count = 0
             peak = False
-
         y += 1
 
     cuts.append(int((y + previousEnd) / 2))
-
     return cuts
 
-def getPentasLimits(sums):
-    th = np.max(sums) / 2
+#Ritorna una lista di x tuple per x pentagrammi. Ogni tupla contiene posizione di inizio e di fine del pentagramma
+#In input si ha la proiezione orizzontale di una immagine
+def getPentasLimits(horizontalProjection):
+    th = np.max(horizontalProjection) / 2
     peak = False
     count = 0
     limits = []
     y = 0
-    for s in sums:
+
+    for s in horizontalProjection:
         if s > th:
             if not peak and count == 0:
                 # salita
@@ -66,78 +76,89 @@ def getPentasLimits(sums):
                     count = 0
                     limits.append((start, end))
             peak = False
-
         y += 1
-
 
     return limits
 
+#Ritorna l'immagine (deepcopy) con l'aggiunta di quadrati a seconda del clsname che si cerca
+#In input si ha l'immagine, il clsname da trovare e il documento XML di supervisione
 def squarize(doc, img, clsnameBeginning=""):
-
     tmpImg = copy.deepcopy(img)
 
     for k in range(len(doc)):
+        #scarta gli elementi nell'xml che non si vogliono
         if not doc[k].clsname.startswith(clsnameBeginning):
             continue
 
-        if k==10:
-            break
 
         l = doc[k].left
         t = doc[k].top
         w = doc[k].width
         h = doc[k].height
 
+        squaresColor = 0.8
+
         for i in range(w):
-            tmpImg[t][l+i] = 0.8
-            tmpImg[t+h][l+i] = 0.8
+            tmpImg[t][l+i] = squaresColor
+            tmpImg[t+h][l+i] = squaresColor
 
         for i in range(h):
-            tmpImg[t+i][l] = 0.8
-            tmpImg[t+i][l+w] = 0.8
+            tmpImg[t+i][l] = squaresColor
+            tmpImg[t+i][l+w] = squaresColor
 
     return tmpImg
 
-def getOrderedNotesAnnotations(doc, cuts):
-
+#Ritorna una lista di liste. Ogni sottolista contiene le note di un pentagramma
+#in ordine del parametro left del XML
+#In input si ha il documento XML di supervisione e la lista
+def getOrderedNotesAnnotations(doc, pentasSeparators):
     notes = []
-    for i in range(len(cuts) - 1):
+    for i in range(len(pentasSeparators) - 1):
         notes.append([])
 
     for k in range(len(doc)):
+        #scarto tutto quello che non è una nota
         if not doc[k].clsname.startswith("notehead"):
             continue
 
         # guardo in quale lista devo appendere la nota
         yNoteheadCenter = doc[k].top + (doc[k].height/2)
         i = 0
-        while yNoteheadCenter > cuts[i]:
+        while yNoteheadCenter > pentasSeparators[i]:
             i += 1
         # appendo la nota alla lista giusta
         notes[i-1].append(doc[k])
 
-    # ordino le liste
+    # ordino le liste in base al "left"
     for i in range(len(notes)):
         notes[i] = sorted(notes[i], key=lambda x: x.left)
 
     return notes
 
-def preprocessStaffLines(imgStaff, numLines):
+#Ritorna l'immagine (deepcopy) con l'aggiunta dei pixel per avere staff continue
+#In input si ha l'immagine delle staff
+def preprocessStaffLines(imgStaff):
     img = copy.deepcopy(imgStaff)
+    numLines = getNumLines(imgStaff)
 
     yExploredLines = []
     for x in range(img.shape[1]):
         for y in range(len(img)):
             flag = True
+            #controllo di non contare linee già processate
             for ey in yExploredLines:
+                #le posizioni salvate vanno controllate con un errore (di 4 in questo caso)
                 if abs(ey - y) < 4:
                     flag = False
                     break
 
+            #se trovo un pixel allora inizio a processare la linea
             if img[y][x] == 1.0 and flag:
                 numLines -= 1
+                #aggiungo la posizione della linea a quelle esplorate
                 yExploredLines.append(y)
                 yCur = y
+                #scorro la linea e se non trovo pixel li aggiungo
                 for k in range(x+1, img.shape[1]):
                     if img[yCur][k] == 1.0:
                         continue
@@ -148,9 +169,9 @@ def preprocessStaffLines(imgStaff, numLines):
                     else:
                         img[yCur][k] = 1.0
 
+                #se non ho più linee ritorno l'immagine
                 if numLines == 0:
                     return img
-
     return "Error: not enough lines found"
 
 def addLedgers(imgStaff, doc):
@@ -260,10 +281,8 @@ def getStaffsFromImage(img):
 
     return staffs
 
-
 def resizePatch(patch, w, h):
     return cv2.resize(patch, dsize=(w, h), interpolation=cv2.INTER_AREA)
-
 
 def getPatchesFromStaff(staff, w, h):
     patches = []
@@ -320,7 +339,7 @@ def ciclone():
         # plt.show()
 
         # TODO preprocess staff: completare staff + aggiunta ledger
-        # imgStaff = preprocessStaffLines(imgStaff, (len(pentasSeparators) - 1) * 5)
+        # imgStaff = preprocessStaffLines(imgStaff)
         # imgStaffLedgers = addLedgers(imgStaff, doc)
         #
         # plt.imshow(imgStaff, cmap="gray")
