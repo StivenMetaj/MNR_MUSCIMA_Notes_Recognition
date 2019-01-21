@@ -137,7 +137,7 @@ def getOrderedNotesAnnotations(doc, pentasSeparators):
 
 #Ritorna l'immagine (deepcopy) con l'aggiunta dei pixel per avere staff continue
 #In input si ha l'immagine delle staff
-def preprocessStaffLines(imgStaff):
+def getPreprocessedStaffImage(imgStaff):
     img = copy.deepcopy(imgStaff)
     numLines = getNumLines(imgStaff)
 
@@ -174,18 +174,23 @@ def preprocessStaffLines(imgStaff):
                     return img
     return "Error: not enough lines found"
 
-def addLedgers(imgStaff, doc):
+#Ritorna l'immagine (deepcopy) con l'aggiunta dei ledgers (linee per note esterne)
+#In input si ha l'immagine delle staff e il documento XML di supervisione
+def getStaffImageWithLedgers(imgStaff, doc):
     img = copy.deepcopy(imgStaff)
 
     for annotation in doc:
+        #voglio solo i ledgers
         if not annotation.clsname.startswith("ledge"):
             continue
         y = annotation.top + int(annotation.height/2)
         for x in range(annotation.width):
+            #disegno il ledger
             img[y][annotation.left + x] = 1.0
-
     return img
 
+#Ritorna l'immagine (deepcopy) con l'aggiunta dei punti centrali delle note
+#In input si ha l'immagine delle staff e il documento XML di supervisione
 def addNotesCenter(imgStaff, doc):
     img = copy.deepcopy(imgStaff)
 
@@ -194,16 +199,20 @@ def addNotesCenter(imgStaff, doc):
             continue
         y = annotation.top + int(annotation.height/2)
         x = annotation.left + int(annotation.width/2)
-        img[y][x] = 0.654321
+        img[y][x] = 0.7
 
     return img
 
-def getNotesPositions(imgStaff, imgStaffLedgers, notesAnnotations, limits):
-
+#Ritorna la lista delle posizioni all'interno del pentagramma (up e low) per ogni nota
+#In input l'immagine delle staff, la lista delle note
+def getNotesPentasPositions(imgStaff, imgStaffLedgers, notesAnnotations):
     notesPositions = []
+    limits = getPentasLimits(getHorizontalProjection(imgStaff))
+    #solo le note il cui centro è tra limit0-stop e limit1+stop vengono prese in considerazione
     stopValue = ((limits[0][1] - limits[0][0])/4) * 1.5
 
     for annotatedStaff in notesAnnotations:
+        #per ogni pentagramma avro' una lista notesPos
         notesPos = []
         for annotation in annotatedStaff:
             if isInsideStaff(annotation, limits):
@@ -338,15 +347,15 @@ def ciclone():
         # plt.plot(sums.tolist())
         # plt.show()
 
-        # TODO preprocess staff: completare staff + aggiunta ledger
-        # imgStaff = preprocessStaffLines(imgStaff)
+
+        # imgStaff = getPreprocessedStaffImage(imgStaff)
         # imgStaffLedgers = addLedgers(imgStaff, doc)
         #
         # plt.imshow(imgStaff, cmap="gray")
         # plt.show()
 
-        # TODO trasforma annotazioni in informazione sulla posizione
-        # notesPositions = getNotesPositions(imgStaff, imgStaffLedgers, notesAnnotations, pentasLimits)
+
+        # notesPositions = getNotesPentasPositions(imgStaff, imgStaffLedgers, notesAnnotations)
 
     exit(0)
 
