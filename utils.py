@@ -1,14 +1,8 @@
 import copy
-import os
 import random
 
-import cv2
-from muscima.io import parse_cropobject_list
-
 import numpy as np
-
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+import cv2
 
 
 # Ritorna la proiezione orizzontale. In input si ha l'immagine target
@@ -294,133 +288,13 @@ def getInsideStaffNotePosition(imgStaff, noteAnnotation, stopValue):
 
     return upperLines, lowerLines
 
-#Ritorna le coordinate y e x della nota
+
+# Ritorna le coordinate y e x della nota
 def getNoteCoordinates(noteAnnotation):
     return noteAnnotation.top + int(noteAnnotation.height / 2), noteAnnotation.left + int(noteAnnotation.width / 2)
 
-#Ritorna la posizione della nota all'interno del pentagramma, nel caso in cui la nota sia fuori dalle staff
-#TODO
+
+# Ritorna la posizione della nota all'interno del pentagramma, nel caso in cui la nota sia fuori dalle staff
+# TODO
 def outsideStaffPosition(imgStaff, annotation, stopValue):
     return 1, 1
-
-#Ritorna una lista di immagini contenenti solo le staffs, con i rispettivi OFFSET sulle y
-#In input si ha l'immagine di partenza
-def getStaffsFromImage(img):
-    horizontalProjection = np.sum(img, axis=1)
-    pentasSeparators = getPentasSeparators(horizontalProjection)
-    staffsAndOffsetsY = []
-
-    #per separatori - 1 volte taglio l'immagine di partenza e la salvo in staff
-    for i in range(len(pentasSeparators) - 1):
-        start, end = pentasSeparators[i], pentasSeparators[i + 1]
-        staff = img[start: end]
-        staffsAndOffsetsY.append((staff, (start, end)))
-
-    return staffsAndOffsetsY
-
-#Ritorna il resize dell'immagine 'patch' secondo le dimensioni w h
-def resizePatch(patch, w, h):
-    return cv2.resize(patch, dsize=(w, h), interpolation=cv2.INTER_AREA)
-
-#Ritorna la misura dopo aver fatto un resize da startDim a finalDim
-#Si e' pensato al fatto che il resize è operazione lineare e quindi il calcolo deriva dalla
-#proporzione [start : final = measure : X]
-#In input si hanno quindi i 3 valori
-def getResizedMeasure(startDimension, finalDimension, measure):
-    return (finalDimension*measure)/startDimension
-
-#Ritorna una lista di immagini contenenti solo le patch per il dataset
-#In input si hanno l'immagine del pentagramma singolo e le dimensioni w, h
-def getPatchesFromStaff(staff, w, h):
-    patchesAndOffsetsX = []
-    l = len(staff)
-
-    transpStaff = staff.transpose()
-    # numero di patch sequenziali
-    n = int(staff.shape[1] / l)
-    for i in range(n):
-        #taglio il pentagramma in modo sequenziale
-        start, end = i * l, (i + 1) * l
-        patch = transpStaff[start: end].transpose()
-        # print(str(i*l))
-        # plt.imshow(patch, cmap="gray")
-        # plt.show()
-        patch = resizePatch(patch, w, h)
-        patchesAndOffsetsX.append((patch, (start, end)))
-
-
-        #creo patch casuali di ugual numero a quelle sequenziali
-        start = random.randint(0, staff.shape[1] - l)
-        end = start + l
-        patch = transpStaff[start: end].transpose()
-        patch = resizePatch(patch, w, h)
-        patchesAndOffsetsX.append((patch, (start, end)))
-
-    return patchesAndOffsetsX
-
-#Funzione che cicla su tutti i file xml
-def ciclone():
-    # TODO capire differenza tra i due XML
-    CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
-    # CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
-
-    cropobject_fnames = [os.path.join(CROPOBJECT_DIR, f) for f in os.listdir(CROPOBJECT_DIR)]
-    #per debuggare
-    cropobject_fnames = cropobject_fnames[:5]
-
-    docs = [parse_cropobject_list(f) for f in cropobject_fnames]
-
-    for docID in range(len(docs)):
-        doc = docs[docID]
-
-        #prendo dall'xml l'id del writer (w) e dello spartito (p)
-        w = doc[0].uid[31:33]
-        p = doc[0].uid[36:38]
-
-        imgPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
-        imgStaffPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
-
-        imgStaff = mpimg.imread(imgStaffPath)
-
-        horizontalProjection = np.sum(imgStaff, axis=1)
-
-        pentasSeparators = getPentasSeparators(horizontalProjection)
-
-        notesAnnotations = getOrderedNotesAnnotations(doc, pentasSeparators)
-
-        #per plottare la proiezione orizzontale si deve prima trasformare il vettore in una lista
-        # plt.plot(sums.tolist())
-        # plt.show()
-
-        imgStaff = getPreprocessedStaffImage(imgStaff)
-        imgStaffLedgers = getStaffImageWithLedgers(imgStaff, doc)
-
-        plt.imshow(imgStaff, cmap="gray")
-        plt.show()
-
-        notesPositions = getNotesPentasPositions(imgStaff, imgStaffLedgers, notesAnnotations)
-        print(notesPositions)
-
-#funzione che taglia le immagini in patches
-def funzioneMegaPerLePatches(w, p, dimX, dimY):
-    imgPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
-    imgStaffPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
-
-    img = mpimg.imread(imgPath)
-
-    staffs = getStaffsFromImage(img)
-
-    for staff in staffs:
-        patches = getPatchesFromStaff(staff[0], dimX, dimY)
-        for patch in patches:
-            plt.imshow(patch[0], cmap="gray")
-            plt.show()
-
-# TODO aggiungere notazioni a patches... continuare la cosa!
-# TODO funzione che prende (upper, lower) e restituisce la classe, ovvero un intero appartenente a [-5, 5]
-if __name__ == "__main__":
-    prova = 1
-    if prova == 1:
-        funzioneMegaPerLePatches("01", "10", 128, 128)
-    if prova == 2:
-        ciclone()
