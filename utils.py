@@ -1,6 +1,7 @@
 import copy
 import random
 
+
 import numpy as np
 import cv2
 
@@ -20,7 +21,7 @@ def getNumLines(imgStaff):
 # Ritorna le posizioni dei separatori dei pentagrammi
 # In input si ha la proiezione orizzontale di una immagine
 def getPentasSeparators(horizontalProjection):
-    th = np.max(horizontalProjection) / 2
+    th = (np.max(horizontalProjection)) / 2
     peak = False
     count = 0
     cuts = []
@@ -45,7 +46,8 @@ def getPentasSeparators(horizontalProjection):
             peak = False
         y += 1
 
-    cuts.append(int((y + previousEnd) / 2))
+    cuts.append(y)
+    cuts[0] = 0
     return cuts
 
 
@@ -110,7 +112,9 @@ def squarize(doc, img, clsnameBeginning=""):
 # Ritorna una lista di liste. Ogni sottolista contiene le note di un pentagramma
 # in ordine del parametro left del XML
 # In input si ha il documento XML di supervisione e la lista
-def getOrderedNotesAnnotations(doc, pentasSeparators):
+def getOrderedNotesAnnotations(doc, imgStaff):
+    horizontalProjection = getHorizontalProjection(imgStaff)
+    pentasSeparators = getPentasSeparators(horizontalProjection)
     notes = []
     for i in range(len(pentasSeparators) - 1):
         notes.append([])
@@ -220,10 +224,11 @@ def getNotesPentasPositions(imgStaff, imgStaffLedgers, notesAnnotations):
         for note in staff:
             if isInsideStaff(note, pentasLimits):
                 u, l = getInsideStaffNotePosition(imgStaff, note, stopValue)
+                notesPos.append(l - u)
             # TODO gestire fuori pentagramma (funzione outside vuota)
             else:
                 u, l = outsideStaffPosition(imgStaff, note, stopValue)
-            notesPos.append((u, l))
+
         notesPositions.append(notesPos)
 
     return notesPositions

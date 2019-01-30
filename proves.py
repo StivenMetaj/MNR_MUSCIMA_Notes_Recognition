@@ -4,6 +4,7 @@ from utils import *
 from convert import *
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import pprint as pp
 
 
 # Funzione che cicla su tutti i file xml
@@ -29,12 +30,13 @@ def ciclone():
         imgStaffPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
 
         imgStaff = mpimg.imread(imgStaffPath)
+        img = mpimg.imread(imgPath)
 
         horizontalProjection = np.sum(imgStaff, axis=1)
 
         pentasSeparators = getPentasSeparators(horizontalProjection)
 
-        notesAnnotations = getOrderedNotesAnnotations(doc, pentasSeparators)
+        notesAnnotations = getOrderedNotesAnnotations(doc, imgStaff)
 
         # per plottare la proiezione orizzontale si deve prima trasformare il vettore in una lista
         # plt.plot(sums.tolist())
@@ -43,11 +45,10 @@ def ciclone():
         imgStaff = getPreprocessedStaffImage(imgStaff)
         imgStaffLedgers = getStaffImageWithLedgers(imgStaff, doc)
 
-        plt.imshow(imgStaff, cmap="gray")
-        plt.show()
-
         notesPositions = getNotesPentasPositions(imgStaff, imgStaffLedgers, notesAnnotations)
         print(notesPositions)
+        plt.imshow(img, cmap="gray")
+        plt.show()
 
 
 # funzione che taglia le immagini in patches
