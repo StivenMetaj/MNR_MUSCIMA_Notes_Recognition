@@ -1,5 +1,7 @@
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from utils import *
 from muscima.io import parse_cropobject_list
 import os

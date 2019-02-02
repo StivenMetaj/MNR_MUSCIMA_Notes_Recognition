@@ -1,10 +1,20 @@
 import os
 from muscima.io import parse_cropobject_list
-from utils import *
-from convert import *
+import pprint as pp
+
+import matplotlib
+if os.environ["DISPLAY"].startswith("localhost"): # se la GUI non è disponibile (ovvero se sono su un server)
+    matplotlib.use("Agg")   # necessario per salvare immagini di matplotlib quando lo script gira su un server senza GUI
+    isGuiAvailable = False
+    print("GUI not found")
+else:
+    isGuiAvailable = True
+    print("GUI found")
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-import pprint as pp
+
+from utils import *
+from convert import *
 
 
 # Funzione che cicla su tutti i file xml
@@ -47,8 +57,14 @@ def ciclone():
 
         notesPositions = getNotesPentasPositions(imgStaff, imgStaffLedgers, notesAnnotations)
         print(notesPositions)
-        plt.imshow(img, cmap="gray")
-        plt.show()
+        if isGuiAvailable:
+            plt.imshow(img, cmap="gray")
+            plt.show()
+
+        # per ora, se sono su un server senza GUI evito di fare i plot, però potrei salvare l'immagine in questo modo:
+        # else:
+        #     plt.savefig("nome_immagine.png")
+        #     plt.clf()
 
 
 # funzione che taglia le immagini in patches
