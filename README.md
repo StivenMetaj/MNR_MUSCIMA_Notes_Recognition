@@ -1,4 +1,5 @@
 #MUSCIMA Notes Recognition
+
 The aim of this project is to use Faster-RCNN to recognize notes from the CVC-MUSCIMA dataset, with MUSCIMA++ annotations.
 
 ## Steps to reproduce the experiments
