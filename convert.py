@@ -194,22 +194,26 @@ def convert(dimX, dimY, doc):
 
 # Ritorna True se le cartelle per il salvataggio dei dati esistono, False altrimenti
 def checkAndClearDirectories():
-    if os.path.exists(dataDir):
-        if os.path.exists(annotationsDir):
-            clearDirectory(annotationsDir)
-            if os.path.exists(imagesDir):
-                clearDirectory(imagesDir)
-                print('All directories exist')
-                return True
-            else:
-                print("I/O error (JPEGImages)")
-                return False
-        else:
-            print("I/O error (Annotations)")
+    # se almeno una delle due cartelle di output esiste, chiedo conferma per sovrascrivere il contenuto
+    if os.path.exists(imagesDir) or os.path.exists(annotationsDir):
+        response = ""
+        while response != 'y' and response != 'n':
+            print("Output directory it's not empty: do you want to clear it and overwrite the content? (y/n)")
+            response = input().lower()
+        if response == 'n':
             return False
+
+    # creo cartelle o elimino contenuto
+    if not os.path.exists(imagesDir):
+        os.makedirs(imagesDir)
     else:
-        print("I/O error (MNR2019)")
-        return False
+        clearDirectory(imagesDir)
+    if not os.path.exists(annotationsDir):
+        os.makedirs(annotationsDir)
+    else:
+        clearDirectory(annotationsDir)
+
+    return True
 
 
 # La funzione elimina i file all'interno della cartella che ha percorso = 'directorPath'
