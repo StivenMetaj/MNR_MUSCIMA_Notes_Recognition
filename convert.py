@@ -2,18 +2,22 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.image as mpimg
 #import matplotlib.pyplot as plt
-from utils import *
 from muscima.io import parse_cropobject_list
 import os
 import xml.etree.cElementTree as ET
 import xml.dom.minidom as minidom
 from tqdm import tqdm
 
+import random
+import cv2
+
+from utils import *
+
 docDiProva = parse_cropobject_list('CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual/'
                                    'CVC-MUSCIMA_W-01_N-10_D-ideal.xml')
 dataDir = 'MNR2019'
-imagesDir = 'MNR2019/JPEGImages'
-annotationsDir = 'MNR2019/Annotations'
+imagesDir = dataDir + '/JPEGImages'
+annotationsDir = dataDir + '/Annotations'
 globalPatchesCounter = 1
 
 
