@@ -25,5 +25,14 @@ The aim of this project is to use Faster-RCNN to recognize notes from the CVC-MU
 `unzip MUSCIMA-pp_v1.0.zip -d CVCMUSCIMA/MUSCIMA++`
 + convert dataset into PASCAL VOC 2007 format:
 `python3 convert.py`
-### 3) Do the experiments
+### 3) Prepare facebookreasearch/maskrcnn-benchmark library
++ download library source code:
+`git clone https://github.com/facebookresearch/maskrcnn-benchmark.git`
++ follow instructions to install the library on maskrcnn-benchmark/INSTALL.md
++ return to the root of this project
++ overwrite some library file in order to support MUSCIMA dataset:
+`cp -r overwrite/maskrcnn-benchmark ./`
++ create a symbolic link to MUSCIMA dataset:
+`ln -s $MNR2019 maskrcnn-benchmark/datasets/MNR2019`
+### 4) Do the experiments
 + have fun (work in progress)

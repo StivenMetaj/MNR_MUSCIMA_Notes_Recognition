@@ -1,3 +1,5 @@
+import argparse
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.image as mpimg
@@ -364,6 +366,8 @@ class MuscimaDataset(object):
                     imageLabel.append(label)
                     imageBoxes.append(box)
 
+                if len(imageBoxes) == 0:
+                    continue
 
                 # aggiungo l'immagine al dataset
                 self.dataset.append(image)
@@ -423,7 +427,7 @@ if __name__ == "__main__":
     md = MuscimaDataset(numExamples=10)
 
     # prendo un elemento a caso del dataset
-    ex = md[4]
+    ex = md[0]
 
     # non ci sono errori, con maskrcnn-benchmark dovrebbe funzionare
     print("Example read without any error")
