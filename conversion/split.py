@@ -3,11 +3,11 @@ import numpy as np
 from xml.etree import cElementTree as ET
 
 # GLOBAL VARIABLES
-splitDir = "MNR2019/ImageSets"
+splitDir = "data/MNR2019/ImageSets"
 layoutDir = splitDir + "/Layout"
 mainDir = splitDir + "/Main"
 splitDirectoriesList = [layoutDir, mainDir]
-annotationsDir = "MNR2019/Annotations"
+annotationsDir = "data/MNR2019/Annotations"
 
 # TRAIN, VALIDATION, TEST
 splitPoints = [60, 20, 20]

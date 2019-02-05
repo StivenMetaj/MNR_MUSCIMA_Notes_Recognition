@@ -13,15 +13,15 @@ else:
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-from utils import *
-from convert import *
+from conversion.utils import *
+from conversion.convert import *
 
 
 # Funzione che cicla su tutti i file xml
 def ciclone():
     # TODO capire differenza tra i due XML
-    CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
-    # CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
+    CROPOBJECT_DIR = 'data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
+    # CROPOBJECT_DIR = 'data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
 
     cropobject_fnames = [os.path.join(CROPOBJECT_DIR, f) for f in os.listdir(CROPOBJECT_DIR)]
     # per debuggare
@@ -36,8 +36,8 @@ def ciclone():
         w = doc[0].uid[31:33]
         p = doc[0].uid[36:38]
 
-        imgPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
-        imgStaffPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
+        imgPath = "data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
+        imgStaffPath = "data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
 
         imgStaff = mpimg.imread(imgStaffPath)
         img = mpimg.imread(imgPath)

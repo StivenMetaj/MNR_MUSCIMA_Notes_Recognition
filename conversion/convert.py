@@ -11,11 +11,11 @@ from tqdm import tqdm
 import random
 import cv2
 
-from utils import *
+from conversion.utils import *
 
-docDiProva = parse_cropobject_list('CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual/'
+docDiProva = parse_cropobject_list('data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual/'
                                    'CVC-MUSCIMA_W-01_N-10_D-ideal.xml')
-dataDir = 'MNR2019'
+dataDir = 'data/MNR2019'
 imagesDir = dataDir + '/JPEGImages'
 annotationsDir = dataDir + '/Annotations'
 globalPatchesCounter = 1
@@ -84,8 +84,8 @@ def getResizedMeasure(startDimension, finalDimension, measure):
 def inizializeImagesAndNotes(doc):
     w = doc[0].uid[31:33]
     p = doc[0].uid[36:38]
-    imgPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
-    imgStaffPath = "CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
+    imgPath = "data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
+    imgStaffPath = "data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
 
     img = mpimg.imread(imgPath)
     imgStaff = mpimg.imread(imgStaffPath)
@@ -235,8 +235,8 @@ def clearDirectory(directoryPath):
 
 
 def main(debug=False):
-    CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
-    # CROPOBJECT_DIR = 'CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
+    CROPOBJECT_DIR = 'data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
+    # CROPOBJECT_DIR = 'data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
 
     print("Reading files from MUSCIMA...")
     print()
