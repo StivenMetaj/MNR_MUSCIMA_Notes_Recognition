@@ -14,11 +14,13 @@ MODEL:
   ROI_HEADS:
     USE_FPN: True
   ROI_BOX_HEAD:
+    NUM_CLASSES: 11 #12?
     POOLER_RESOLUTION: 7
     POOLER_SCALES: (0.25, 0.125, 0.0625, 0.03125)
     POOLER_SAMPLING_RATIO: 2
     FEATURE_EXTRACTOR: "FPN2MLPFeatureExtractor"
     PREDICTOR: "FPNPredictor"
+  RPN_ONLY: True
 DATASETS:
   TRAIN: ("muscima_train", "muscima_val")
   TEST: ("muscima_test",)

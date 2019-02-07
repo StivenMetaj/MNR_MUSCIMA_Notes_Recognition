@@ -207,13 +207,17 @@ def evaluate_box_proposals(
         gt_boxes = BoxList(gt_boxes, (image_width, image_height), mode="xywh").convert(
             "xyxy"
         )
-        gt_areas = torch.as_tensor([obj["area"] for obj in anno if obj["iscrowd"] == 0])
 
         if len(gt_boxes) == 0:
             continue
 
-        valid_gt_inds = (gt_areas >= area_range[0]) & (gt_areas <= area_range[1])
-        gt_boxes = gt_boxes[valid_gt_inds]
+        if area != 'all':
+            try:
+                gt_areas = torch.as_tensor([obj["area"] for obj in anno if obj["iscrowd"] == 0])
+                valid_gt_inds = (gt_areas >= area_range[0]) & (gt_areas <= area_range[1])
+                gt_boxes = gt_boxes[valid_gt_inds]
+            except KeyError:
+                continue
 
         num_pos += len(gt_boxes)
 
@@ -248,6 +252,16 @@ def evaluate_box_proposals(
 
         # append recorded iou coverage level
         gt_overlaps.append(_gt_overlaps)
+
+    if len(gt_overlaps) == 0:
+        return {
+            "ar": torch.zeros(1),
+            "recalls": torch.zeros(1),
+            "thresholds": thresholds,
+            "gt_overlaps": gt_overlaps,
+            "num_pos": num_pos,
+        }
+
     gt_overlaps = torch.cat(gt_overlaps, dim=0)
     gt_overlaps, _ = torch.sort(gt_overlaps)
 

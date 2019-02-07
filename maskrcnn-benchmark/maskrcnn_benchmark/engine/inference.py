@@ -18,6 +18,8 @@ def compute_on_dataset(model, data_loader, device):
     results_dict = {}
     cpu_device = torch.device("cpu")
     for i, batch in enumerate(tqdm(data_loader)):
+        if i == 3:
+            break
         images, targets, image_ids = batch
         images = images.to(device)
         with torch.no_grad():

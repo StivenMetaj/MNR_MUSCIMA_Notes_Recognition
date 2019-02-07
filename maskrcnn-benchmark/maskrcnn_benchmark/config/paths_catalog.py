@@ -88,24 +88,36 @@ class DatasetCatalog(object):
             "img_dir": "cityscapes/images",
             "ann_file": "cityscapes/annotations/instancesonly_filtered_gtFine_test.json"
         },
+        # "muscima_train": {
+        #     "data_dir": "MNR2019",
+        #     "split": "train"
+        # },
+        # "muscima_val": {
+        #     "data_dir": "MNR2019",
+        #     "split": "val"
+        # },
+        # "muscima_test": {
+        #     "data_dir": "MNR2019",
+        #     "split": "test"
+        # }
         "muscima_train": {
-            "data_dir": "MNR2019",
-            "split": "train"
+            "img_dir": "mnr/train2019",
+            "ann_file": "mnr/annotations/instances_train2019.json"
         },
         "muscima_val": {
-            "data_dir": "MNR2019",
-            "split": "val"
+            "img_dir": "mnr/val2019",
+            "ann_file": "mnr/annotations/instances_val2019.json"
         },
         "muscima_test": {
-            "data_dir": "MNR2019",
-            "split": "test"
+            "img_dir": "mnr/test2019",
+            "ann_file": "mnr/annotations/instances_test2019.json"
         }
 
     }
 
     @staticmethod
     def get(name):
-        if "coco" in name:
+        if "coco" in name or "muscima" in name:
             data_dir = DatasetCatalog.DATA_DIR
             attrs = DatasetCatalog.DATASETS[name]
             args = dict(
@@ -127,17 +139,17 @@ class DatasetCatalog(object):
                 factory="PascalVOCDataset",
                 args=args,
             )
-        elif "muscima" in name:
-            data_dir = DatasetCatalog.DATA_DIR
-            attrs = DatasetCatalog.DATASETS[name]
-            args = dict(
-                data_dir=os.path.join(data_dir, attrs["data_dir"]),
-                split=attrs["split"],
-            )
-            return dict(
-                factory="MuscimaDataset",
-                args=args,
-            )
+        # elif "muscima" in name:
+        #     data_dir = DatasetCatalog.DATA_DIR
+        #     attrs = DatasetCatalog.DATASETS[name]
+        #     args = dict(
+        #         data_dir=os.path.join(data_dir, attrs["data_dir"]),
+        #         split=attrs["split"],
+        #     )
+        #     return dict(
+        #         factory="MuscimaDataset",
+        #         args=args,
+        #     )
         raise RuntimeError("Dataset not available: {}".format(name))
 
 
