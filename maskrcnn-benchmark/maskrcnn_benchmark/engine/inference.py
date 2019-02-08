@@ -18,13 +18,49 @@ def compute_on_dataset(model, data_loader, device):
     results_dict = {}
     cpu_device = torch.device("cpu")
     for i, batch in enumerate(tqdm(data_loader)):
-        if i == 3:
-            break
         images, targets, image_ids = batch
         images = images.to(device)
         with torch.no_grad():
             output = model(images)
             output = [o.to(cpu_device) for o in output]
+
+            ''' PROVIAMO A CAPIRE MEGLIO LE PREDIZIONI
+            '''
+            # import convert_to_coco
+            # convert_to_coco.clearDirectory("../data/mnr/PROVESTIV")
+            # for j, ou in enumerate(output):
+            #     imgID = data_loader.dataset.id_to_img_map[i*len(batch) + j]
+            #     imgPath = "../data/mnr/test2019/" + '{0:012d}'.format(imgID) + ".jpg"
+            #     import matplotlib.pyplot as plt
+            #     import matplotlib.image as mpimg
+            #     img = mpimg.imread(imgPath)
+            #     plt.imshow(img, cmap="gray")
+            #     plt.savefig("../data/mnr/PROVESTIV/" + str(imgID) + ".jpg")
+            #     plt.clf()
+            #
+            #     for k in range():
+            #         # scarta gli elementi nell'xml che non si vogliono
+            #         if not doc[k].clsname.startswith(clsnameBeginning):
+            #             continue
+            #
+            #         l = doc[k].left
+            #         t = doc[k].top
+            #         w = doc[k].width
+            #         h = doc[k].height
+            #
+            #         squaresColor = 0.8
+            #
+            #         for i in range(w):
+            #             tmpImg[t][l + i] = squaresColor
+            #             tmpImg[t + h][l + i] = squaresColor
+            #
+            #         for i in range(h):
+            #             tmpImg[t + i][l] = squaresColor
+            #             tmpImg[t + i][l + w] = squaresColor
+
+
+
+
         results_dict.update(
             {img_id: result for img_id, result in zip(image_ids, output)}
         )
@@ -76,6 +112,7 @@ def inference(
     logger.info("Start evaluation on {} dataset({} images).".format(dataset_name, len(dataset)))
     start_time = time.time()
     predictions = compute_on_dataset(model, data_loader, device)
+
     # wait for all processes to complete before measuring the time
     synchronize()
     total_time = time.time() - start_time

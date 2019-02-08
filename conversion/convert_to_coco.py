@@ -209,7 +209,7 @@ def convertToCoco(dimX, dimY, doc, outputDirImages):
                 classe = None
                 if isInsideStaff(note, pentasLimits):
                     up, low = getInsideStaffNotePosition(imgStaff, note, stopValue)
-                    classe = getClassFromPositions(up, low)
+                    classe = min(max(getClassFromPositions(up, low),-5),5)
                 else:
                     classe = "OutOfStaffs"
                     continue
