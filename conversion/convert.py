@@ -1,7 +1,8 @@
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.image as mpimg
-#import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from muscima.io import parse_cropobject_list
 import os
 import xml.etree.cElementTree as ET
@@ -119,9 +120,10 @@ def prettify(xml):
     reparsed = minidom.parseString(xmlString)
     return reparsed.toprettyxml(indent="\t")
 
+
 # Ritorna la classe della nota in base agli indici up e low
 def getClassFromPositions(u, l):
-    return l-u
+    return l - u
 
 
 # Cancella i file nelle cartelle di destinazione e crea immagini delle patch e file xml
@@ -251,7 +253,6 @@ def main(debug=False):
 
     if not checkAndClearDirectories():
         return
-
 
     for docID in tqdm(range(len(docs))):
         doc = docs[docID]
