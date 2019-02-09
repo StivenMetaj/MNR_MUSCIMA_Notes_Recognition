@@ -108,7 +108,7 @@ def initializeImagesAndNotes(doc):
 
 # Ritorna la classe della nota in base agli indici up e low
 def getClassFromPositions(u, l):
-    return l - u
+    return 6 + l - u
 
 
 '''
@@ -132,6 +132,7 @@ license{
 
 def classIdToName(id):
     CLASSES = (
+        "__background__",
         "under_staffs",
         "first_line",
         "first_space",
@@ -144,7 +145,7 @@ def classIdToName(id):
         "fifth_line",
         "above_staffs",
     )
-    return CLASSES[id + 5]
+    return CLASSES[id]
 
 
 # Cancella i file nelle cartelle di destinazione e crea immagini delle patch e file xml
@@ -209,13 +210,14 @@ def convertToCoco(dimX, dimY, doc, outputDirImages):
                 classe = None
                 if isInsideStaff(note, pentasLimits):
                     up, low = getInsideStaffNotePosition(imgStaff, note, stopValue)
-                    classe = min(max(getClassFromPositions(up, low),-5),5)
+                    classe = min(max(getClassFromPositions(up, low), 1), 11)
                 else:
                     classe = "OutOfStaffs"
                     continue
 
+                area = w*h  # TODO in realtà sarebbe l'area della maschera, che per adesso non viene usata
                 annotation = {"id": globalAnnotationsCounter, "image_id": globalPatchesCounter, "category_id": classe,
-                              "bbox": [l, t, w, h], "iscrowd": 0, "ignore": 1}
+                              "bbox": [l, t, w, h], "iscrowd": 0, "area": area}
                 annotations.append(annotation)
                 globalAnnotationsCounter += 1
 
@@ -270,9 +272,11 @@ def getJSONfromDocs(docs, outputDirImages):
     annotations = []
     # licenses = []
 
-    for id in range(-5, 6):
+    for id in range(1, 12):
         categories.append({"id": id, "name": classIdToName(id)})
 
+    print()
+    print("Converting docs...")
     for docID in tqdm(range(len(docs))):
         doc = docs[docID]
 
@@ -287,15 +291,15 @@ def main(debug=False):
     CROPOBJECT_DIR = '../data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
     # CROPOBJECT_DIR = '../data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
 
-    print("Reading files from MUSCIMA...")
     print()
+    print("Reading list of xml annotations files...")
     cropobject_fnames = [os.path.join(CROPOBJECT_DIR, f) for f in tqdm(os.listdir(CROPOBJECT_DIR))]
     # per debuggare
     if debug:
         cropobject_fnames = cropobject_fnames[70:71]
 
-    print("Reading documents from files...")
     print()
+    print("Reading xml annotations...")
     docs = [parse_cropobject_list(f) for f in tqdm(cropobject_fnames)]
 
     # random shuffle with seed

@@ -211,13 +211,9 @@ def evaluate_box_proposals(
         if len(gt_boxes) == 0:
             continue
 
-        if area != 'all':
-            try:
-                gt_areas = torch.as_tensor([obj["area"] for obj in anno if obj["iscrowd"] == 0])
-                valid_gt_inds = (gt_areas >= area_range[0]) & (gt_areas <= area_range[1])
-                gt_boxes = gt_boxes[valid_gt_inds]
-            except KeyError:
-                continue
+        gt_areas = torch.as_tensor([obj["area"] for obj in anno if obj["iscrowd"] == 0])
+        valid_gt_inds = (gt_areas >= area_range[0]) & (gt_areas <= area_range[1])
+        gt_boxes = gt_boxes[valid_gt_inds]
 
         num_pos += len(gt_boxes)
 
@@ -298,6 +294,11 @@ def evaluate_predictions_on_coco(
 
     # coco_dt = coco_gt.loadRes(coco_results)
     coco_eval = COCOeval(coco_gt, coco_dt, iou_type)
+
+    # if "muscima" in json_result_file:
+    #     coco_eval.params.areaRng = [[0 ** 2, 1e5 ** 2]]
+    #     coco_eval.params.areaRngLbl = ['all']
+
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
