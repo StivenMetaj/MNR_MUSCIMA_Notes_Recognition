@@ -108,7 +108,7 @@ class MuscimaDemo(object):
         )
         return transform
 
-    def run_on_opencv_image(self, image):
+    def run_on_opencv_image(self, image, returnedPredictions=None):
         """
         Arguments:
             image (np.ndarray): an image as returned by OpenCV
@@ -120,6 +120,14 @@ class MuscimaDemo(object):
         """
         predictions = self.compute_prediction(image)
         top_predictions = self.select_top_predictions(predictions)
+
+        # prendo le predizioni per ritornarle
+        if returnedPredictions is not None:
+            assert isinstance(returnedPredictions, list)
+            returnedPredictions.clear()
+            returnedPredictions.append(top_predictions.bbox)
+            returnedPredictions.append(top_predictions.get_field('labels'))
+            returnedPredictions.append(top_predictions.get_field('scores'))
 
         result = image.copy()
         if self.show_mask_heatmaps:
@@ -307,6 +315,7 @@ class MuscimaDemo(object):
 
         return image
 
+    # legge l'immagine specificata, calcola le predizioni su di essa e le visualizza
     def visualizePredictions(self, imgPath):
         img = cv2.imread(imgPath, cv2.IMREAD_COLOR)
         # cv2.imshow('image', img)  # scommentare se si vuole vedere l'immagine originale
@@ -316,14 +325,89 @@ class MuscimaDemo(object):
                                     # può incidere sulla qualità delle predizioni;
                                     # se messo a 128 (quindi niente ridimensionamento), le annotazioni si vedono male
         img = cv2.resize(img, (prePredictionsSize, prePredictionsSize))
-        composite = self.run_on_opencv_image(img)
-        # TODO beccare e stampare lista dei bbox e labels predetti
-        displaySize = 896   # dimensione dell'immagine visualizzata a schermo, non incide sulle predizioni
+        returnedPredictions = []  # questa lista viene riempita da run_on_opencv_image con le predizioni
+        composite = self.run_on_opencv_image(img, returnedPredictions)
+
+        # stampo lista dei bbox e labels predetti, con relativi score
+        print("Predictions for image " + str(imgPath))
+        bboxes, labels, scores = returnedPredictions
+        if len(bboxes) > 0:
+            bboxes, labels, scores = sortAnnotations(bboxes, labels, scores)
+            predSeq = getLabelsSequence(bboxes, labels)
+            print("bboxes: " + str(bboxes))
+            print("labels: " + str(labels))
+            print("scores: " + str(scores))
+            print("sequence: " + str(predSeq))
+
+            # TODO prendere bounding box e label dal groundtruth, da essi ottenere la sequenza vera, e mostrare la distanza con quella predetta
+            # ...
+            # trueSeq = getLabelsSequence(... )
+            # print("sequence distance from groundtruth: " + sequencesDistance(trueSeq, predSeq))
+        else:
+            print("no predictions with score above threshold")
+        print()
+
+        displaySize = 700   # dimensione dell'immagine visualizzata a schermo, non incide sulle predizioni
         composite = cv2.resize(composite, (displaySize, displaySize))
+        # i bbox si riferiscono sempre all'immagine di dimensione prePredictionsSize x prePredictionsSize
         cv2.imshow("MUSCIMA detections", composite)
 
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
+
+# ordina le annotazioni per xmin crescente
+def sortAnnotations(bboxes, labels, scores):
+    bboxes, labels, scores = [torch.tensor(z) for z in zip(*sorted(zip(bboxes.tolist(), labels, scores), key=lambda l: l[0][0]))]
+    return bboxes, labels, scores
+
+
+# ritorna una lista di liste di label: la lista esterna scandisce il tempo, ogni lista interna contiene le note suonate in un determinato istante (infatti possono esserci più note in contemporanea)
+def getLabelsSequence(bboxes, labels):
+    # l'ordinamento deve già essere stato fatto
+
+    assert len(bboxes) == len(labels)
+    if len(bboxes) == 0:
+        return []
+
+    # trasformo da torch.Tensor a list
+    bboxes = bboxes.tolist()
+    labels = labels.tolist()
+    # (i bbox sono in formato x1, y1, x2, y1)
+
+    sequence = []             # lista di liste di label
+    bbox = [-1, -1, -1, -1]     # bbox fasullo, è comodo per non gestire la prima iterazione del ciclo con un if (perché non esiste un bbox precedente al primo)
+    for i in range(len(bboxes)):
+        previousBbox = bbox
+        bbox = bboxes[i]
+        label = labels[i]
+        if bbox[0] <= previousBbox[2]:      # bbox.x1 <= previousBbox.x2
+            # se questa annotazione sta sopra o sotto all'annotazione precedente (ovvero le note sono da suonare nello stesso istante)
+            sequence[-1].append(label)
+        else:
+            # se l'annotazione i-esima è lontana da quella precedente, metto la label in un nuovo istante di tempo
+            sequence.append([label])
+
+    return sequence
+
+
+# ritorna la distanza tra due sequenze, non normalizzata
+def sequencesDistance(trueSeq, predSeq):
+
+    if len(trueSeq) < len(predSeq):
+        trueSeq, predSeq = predSeq, trueSeq
+
+    if len(predSeq) == 0:
+        return len([label for instant in trueSeq for label in instant])
+
+    t = set(trueSeq[-1])                # insieme delle note nell'ultimo istante del groundtruth
+    p = set(predSeq[-1])                # insieme delle note nell'ultimo istante della predizione
+    cost = len(t - p) + len(p - t)      # numero di elementi per cui i due insiemi differiscono
+
+    # ricorsione edit-distance
+    return min([sequencesDistance(trueSeq[:-1], predSeq) + len(t),
+               sequencesDistance(trueSeq, predSeq[:-1]) + len(p),
+               sequencesDistance(trueSeq[:-1], predSeq[:-1]) + cost])
 
 
 def main():
@@ -338,7 +422,7 @@ def main():
     parser.add_argument(
         "--confidence-threshold",
         type=float,
-        default=0.55,  # TODO questo parametro è importante, va scelto bene
+        default=0.7,  # TODO questo parametro è importante, va scelto bene
         #default=0.7,
         help="Minimum score for the prediction to be shown",
     )
@@ -392,7 +476,42 @@ def main():
     muscima_demo.visualizePredictions('../datasets/mnr/train2019/000000000028.jpg')
     muscima_demo.visualizePredictions('../datasets/mnr/train2019/000000000050.jpg')
     muscima_demo.visualizePredictions('../datasets/mnr/train2019/000000000079.jpg')
+    muscima_demo.visualizePredictions('../datasets/mnr/val2019/000000012798.jpg')
+    muscima_demo.visualizePredictions('../datasets/mnr/val2019/000000012909.jpg')
+    muscima_demo.visualizePredictions('../datasets/mnr/val2019/000000013251.jpg')
+    muscima_demo.visualizePredictions('../datasets/mnr/val2019/000000013400.jpg')
+    muscima_demo.visualizePredictions('../datasets/mnr/test2019/000000017023.jpg')
+    muscima_demo.visualizePredictions('../datasets/mnr/test2019/000000017123.jpg')
+    muscima_demo.visualizePredictions('../datasets/mnr/test2019/000000017250.jpg')
+    muscima_demo.visualizePredictions('../datasets/mnr/test2019/000000017400.jpg')
 
 
 if __name__ == "__main__":
+    # qualche test per sequencesDistance TODO rimuovere
+    '''
+    trueSeq = [[8, 10], [9, 7], [6, 8]]
+    predSeq = [[10], [7, 9], [5], [6, 8]]
+
+    assert sequencesDistance(trueSeq, predSeq) == 2
+
+    s1 = [[1, 2], [3], [7, 8, 9]]
+    s2 = [[2, 1], [3], [9, 7, 8]]
+
+    assert sequencesDistance(s1, s2) == 0
+
+    s3 = [[1, 2], [3], [7, 8], [9]]
+
+    assert sequencesDistance(s1, s3) == 2
+    assert sequencesDistance(s2, s3) == 2
+
+    s4 = [[2], [2, 1], [3], [9, 8], [10, 11]]
+    assert sequencesDistance(s1, s4) == 4
+    assert sequencesDistance(s2, s4) == 4
+
+    strangeList = [[1], [7, 6], [5], [6, 3], [10], [5], [2, 8], [10], [7, 1, 8, 4, 9], [5], [6, 8]]
+    assert sequencesDistance(s1, strangeList) == sequencesDistance(strangeList, s1)
+    
+    print("OK")
+    '''
+
     main()
