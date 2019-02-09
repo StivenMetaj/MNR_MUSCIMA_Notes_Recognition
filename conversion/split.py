@@ -65,7 +65,7 @@ def split(permutation):
 
     with open(layoutDir + "/trainval.txt", "w") as trainvalFile:
         with open(layoutDir + "/train.txt", "w") as trainFile:
-            for i in permutation[0:trainEnd+1]:
+            for i in permutation[0:trainEnd + 1]:
                 name = '{0:06d}'.format(i)
                 trainFile.write(name + '\n')
                 trainvalFile.write(name + '\n')

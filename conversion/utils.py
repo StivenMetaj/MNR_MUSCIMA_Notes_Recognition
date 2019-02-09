@@ -1,6 +1,7 @@
 import argparse
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.image as mpimg
 
@@ -18,6 +19,7 @@ from xml.dom import minidom
 dataDir = 'MNR2019'
 imagesDir = dataDir + '/JPEGImages'
 annotationsDir = dataDir + '/Annotations'
+
 
 # Ritorna la proiezione orizzontale. In input si ha l'immagine target
 def getHorizontalProjection(img):
@@ -317,6 +319,7 @@ def getNoteCoordinates(noteAnnotation):
 def outsideStaffPosition(imgStaff, annotation, stopValue):
     return 1, 1
 
+
 # questa classe adatta il dataset alla libreria facebookresearch/maskrcnn-benchmark
 # questa classe poteva forse essere evitata (visto che il formato è lo stesso di PASCAL VOC), però per adesso l'ho messa
 class MuscimaDataset(object):
@@ -329,7 +332,7 @@ class MuscimaDataset(object):
         self.dataset = []
         self.labels = []
         self.boxes = []
-        self.exampleNumbers = [] #giusto per controllare che l'associazione tra immagini e annotazioni avvenga correttamente TODO rimuovere
+        self.exampleNumbers = []  # giusto per controllare che l'associazione tra immagini e annotazioni avvenga correttamente TODO rimuovere
 
         for jpgFile in os.listdir(imagesDir):
             jpg_path = os.path.join(imagesDir, jpgFile)
@@ -345,12 +348,12 @@ class MuscimaDataset(object):
                 # leggo il file csv per leggere le annotazioni
                 parsedXML = minidom.parse(xmlPath)
 
-                imageLabel = []   # questa lista conterrà solo le annotazioni di jpgFile
-                imageBoxes = []         # questa lista conterrà solo i box di jpgFile
+                imageLabel = []  # questa lista conterrà solo le annotazioni di jpgFile
+                imageBoxes = []  # questa lista conterrà solo i box di jpgFile
                 for annotation in parsedXML.getElementsByTagName("name"):
                     label = annotation.firstChild.data
 
-                    if label == "OutOfStaffs":   # per ora non considero le note fuori dal pentagramma
+                    if label == "OutOfStaffs":  # per ora non considero le note fuori dal pentagramma
                         # TODO gestire note fuori dal pentagramma
                         continue
 
@@ -362,7 +365,7 @@ class MuscimaDataset(object):
                            int(bndbox.getElementsByTagName("xmax")[0].firstChild.data),  # x2
                            int(bndbox.getElementsByTagName("ymax")[0].firstChild.data)]  # y2
 
-                    label = int(label) # eccezione volutamente non gestita: non voglio che l'xml contenga roba strana
+                    label = int(label)  # eccezione volutamente non gestita: non voglio che l'xml contenga roba strana
                     imageLabel.append(label)
                     imageBoxes.append(box)
 
@@ -374,7 +377,7 @@ class MuscimaDataset(object):
                 # aggiungo le annotazioni relativi all'immagine alla lista di annotazioni
                 self.labels.append(imageLabel)
                 self.boxes.append(imageBoxes)
-                self.exampleNumbers.append(jpgFile[:-4])    #TODO rimuovere
+                self.exampleNumbers.append(jpgFile[:-4])  # TODO rimuovere
 
                 numExamples -= 1
                 if numExamples == 0:
@@ -384,7 +387,6 @@ class MuscimaDataset(object):
         self.labels = self.labels
         # non posso trasformare labels in un Tensor subito perché le img hanno un num variabile di annotazioni
 
-
     def __getitem__(self, idx):
         # load the image as a PIL Image
         image = self.dataset[idx]
@@ -392,10 +394,10 @@ class MuscimaDataset(object):
         # load the bounding boxes as a list of list of boxes
         # in this case, for illustrative purposes, we use
         # x1, y1, x2, y2 order.
-        #boxes = [[0, 0, 10, 10], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50]]
+        # boxes = [[0, 0, 10, 10], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50], [10, 20, 50, 50]]
         boxes = self.boxes[idx]
         # and labels
-        #labels = torch.tensor([10, 20, 10, 20, 10, 20, 10, 20, 2, 3])
+        # labels = torch.tensor([10, 20, 10, 20, 10, 20, 10, 20, 2, 3])
         labels = Tensor(self.labels[idx])
 
         assert len(boxes) == len(labels)
@@ -432,4 +434,3 @@ if __name__ == "__main__":
     # non ci sono errori, con maskrcnn-benchmark dovrebbe funzionare
     print("Example read without any error")
     # TODO provare a fare un miniallenamento con la libreria vera e propria
-

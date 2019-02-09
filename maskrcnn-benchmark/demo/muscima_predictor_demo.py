@@ -316,6 +316,8 @@ class MuscimaDemo(object):
                                     # può incidere sulla qualità delle predizioni;
                                     # se messo a 128 (quindi niente ridimensionamento), le annotazioni si vedono male
         img = cv2.resize(img, (prePredictionsSize, prePredictionsSize))
+
+
         composite = self.run_on_opencv_image(img)
         # TODO beccare e stampare lista dei bbox e labels predetti
         displaySize = 896   # dimensione dell'immagine visualizzata a schermo, non incide sulle predizioni

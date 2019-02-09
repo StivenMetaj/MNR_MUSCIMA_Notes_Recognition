@@ -2,11 +2,7 @@ import matplotlib
 import json
 
 matplotlib.use("Agg")
-import matplotlib.image as mpimg
-# import matplotlib.pyplot as plt
 from muscima.io import parse_cropobject_list
-import os
-import numpy as np
 from tqdm import tqdm
 
 import random
