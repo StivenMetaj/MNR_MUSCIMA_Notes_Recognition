@@ -321,7 +321,7 @@ class MuscimaDemo(object):
         # cv2.imshow('image', img)  # scommentare se si vuole vedere l'immagine originale
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
-        prePredictionsSize = 700    # l'immagine viene riscalata a questa dimensione prima di fare le predizioni,
+        prePredictionsSize = 768    # l'immagine viene riscalata a questa dimensione prima di fare le predizioni,
                                     # può incidere sulla qualità delle predizioni;
                                     # se messo a 128 (quindi niente ridimensionamento), le annotazioni si vedono male
         img = cv2.resize(img, (prePredictionsSize, prePredictionsSize))
@@ -347,7 +347,7 @@ class MuscimaDemo(object):
             print("no predictions with score above threshold")
         print()
 
-        displaySize = 700   # dimensione dell'immagine visualizzata a schermo, non incide sulle predizioni
+        displaySize = 768   # dimensione dell'immagine visualizzata a schermo, non incide sulle predizioni
         composite = cv2.resize(composite, (displaySize, displaySize))
         # i bbox si riferiscono sempre all'immagine di dimensione prePredictionsSize x prePredictionsSize
         cv2.imshow("MUSCIMA detections", composite)
@@ -422,7 +422,7 @@ def main():
     parser.add_argument(
         "--confidence-threshold",
         type=float,
-        default=0.7,  # TODO questo parametro è importante, va scelto bene
+        default=0.2,  # TODO questo parametro è importante, va scelto bene
         #default=0.7,
         help="Minimum score for the prediction to be shown",
     )

@@ -294,20 +294,18 @@ def evaluate_predictions_on_coco(
 
     # coco_dt = coco_gt.loadRes(coco_results)
     coco_eval = COCOeval(coco_gt, coco_dt, iou_type)
-
-    # if "muscima" in json_result_file:
-    #     coco_eval.params.areaRng = [[0 ** 2, 1e5 ** 2]]
-    #     coco_eval.params.areaRngLbl = ['all']
-
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
+
+    # TODO da queste parti aggiungere calcolo della nostra metrica
+
     return coco_eval
 
 
 class COCOResults(object):
     METRICS = {
-        "bbox": ["AP", "AP50", "AP75", "APs", "APm", "APl"],
+        "bbox": ["AP", "AP50", "AP75", "APs", "APm", "APl"], # TODO "ansd"],    # ansd = Average Normalized Sequence Distance
         "segm": ["AP", "AP50", "AP75", "APs", "APm", "APl"],
         "box_proposal": [
             "AR@100",
