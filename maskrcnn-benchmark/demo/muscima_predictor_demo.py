@@ -31,6 +31,7 @@ class MuscimaDemo(object):
         "fifth_line",
         "above_staffs",
     ]
+
     # CATEGORIES = [    # scommentare queste righe se si vuole avere delle etichette più compatte
     #     "__background__",
     #     "US",
@@ -47,12 +48,12 @@ class MuscimaDemo(object):
     # ]
 
     def __init__(
-        self,
-        cfg,
-        confidence_threshold=0.7,
-        show_mask_heatmaps=False,
-        masks_per_dim=2,
-        min_image_size=128,
+            self,
+            cfg,
+            confidence_threshold=0.7,
+            show_mask_heatmaps=False,
+            masks_per_dim=2,
+            min_image_size=128,
     ):
         self.cfg = cfg.clone()
         self.model = build_detection_model(cfg)
@@ -321,9 +322,9 @@ class MuscimaDemo(object):
         # cv2.imshow('image', img)  # scommentare se si vuole vedere l'immagine originale
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
-        prePredictionsSize = 768    # l'immagine viene riscalata a questa dimensione prima di fare le predizioni,
-                                    # può incidere sulla qualità delle predizioni;
-                                    # se messo a 128 (quindi niente ridimensionamento), le annotazioni si vedono male
+        prePredictionsSize = 768  # l'immagine viene riscalata a questa dimensione prima di fare le predizioni,
+        # può incidere sulla qualità delle predizioni;
+        # se messo a 128 (quindi niente ridimensionamento), le annotazioni si vedono male
         img = cv2.resize(img, (prePredictionsSize, prePredictionsSize))
         returnedPredictions = []  # questa lista viene riempita da run_on_opencv_image con le predizioni
         composite = self.run_on_opencv_image(img, returnedPredictions)
@@ -347,7 +348,7 @@ class MuscimaDemo(object):
             print("no predictions with score above threshold")
         print()
 
-        displaySize = 768   # dimensione dell'immagine visualizzata a schermo, non incide sulle predizioni
+        displaySize = 768  # dimensione dell'immagine visualizzata a schermo, non incide sulle predizioni
         composite = cv2.resize(composite, (displaySize, displaySize))
         # i bbox si riferiscono sempre all'immagine di dimensione prePredictionsSize x prePredictionsSize
         cv2.imshow("MUSCIMA detections", composite)
@@ -358,7 +359,8 @@ class MuscimaDemo(object):
 
 # ordina le annotazioni per xmin crescente
 def sortAnnotations(bboxes, labels, scores):
-    bboxes, labels, scores = [torch.tensor(z) for z in zip(*sorted(zip(bboxes.tolist(), labels, scores), key=lambda l: l[0][0]))]
+    bboxes, labels, scores = [torch.tensor(z) for z in
+                              zip(*sorted(zip(bboxes.tolist(), labels, scores), key=lambda l: l[0][0]))]
     return bboxes, labels, scores
 
 
@@ -375,13 +377,14 @@ def getLabelsSequence(bboxes, labels):
     labels = labels.tolist()
     # (i bbox sono in formato x1, y1, x2, y1)
 
-    sequence = []             # lista di liste di label
-    bbox = [-1, -1, -1, -1]     # bbox fasullo, è comodo per non gestire la prima iterazione del ciclo con un if (perché non esiste un bbox precedente al primo)
+    sequence = []  # lista di liste di label
+    bbox = [-1, -1, -1,
+            -1]  # bbox fasullo, è comodo per non gestire la prima iterazione del ciclo con un if (perché non esiste un bbox precedente al primo)
     for i in range(len(bboxes)):
         previousBbox = bbox
         bbox = bboxes[i]
         label = labels[i]
-        if bbox[0] <= previousBbox[2]:      # bbox.x1 <= previousBbox.x2
+        if bbox[0] <= previousBbox[2]:  # bbox.x1 <= previousBbox.x2
             # se questa annotazione sta sopra o sotto all'annotazione precedente (ovvero le note sono da suonare nello stesso istante)
             sequence[-1].append(label)
         else:
@@ -393,28 +396,31 @@ def getLabelsSequence(bboxes, labels):
 
 # ritorna la distanza tra due sequenze, non normalizzata
 def sequencesDistance(trueSeq, predSeq):
-
     if len(trueSeq) < len(predSeq):
         trueSeq, predSeq = predSeq, trueSeq
 
     if len(predSeq) == 0:
         return len([label for instant in trueSeq for label in instant])
 
-    t = set(trueSeq[-1])                # insieme delle note nell'ultimo istante del groundtruth
-    p = set(predSeq[-1])                # insieme delle note nell'ultimo istante della predizione
-    cost = len(t - p) + len(p - t)      # numero di elementi per cui i due insiemi differiscono
+    t = set(trueSeq[-1])  # insieme delle note nell'ultimo istante del groundtruth
+    p = set(predSeq[-1])  # insieme delle note nell'ultimo istante della predizione
+    cost = len(t - p) + len(p - t)  # numero di elementi per cui i due insiemi differiscono
 
     # ricorsione edit-distance
     return min([sequencesDistance(trueSeq[:-1], predSeq) + len(t),
-               sequencesDistance(trueSeq, predSeq[:-1]) + len(p),
-               sequencesDistance(trueSeq[:-1], predSeq[:-1]) + cost])
+                sequencesDistance(trueSeq, predSeq[:-1]) + len(p),
+                sequencesDistance(trueSeq[:-1], predSeq[:-1]) + cost])
+
+
+def normalizedSequencesDistance(trueSeq, predSeq):
+    return sequencesDistance(trueSeq, predSeq) / len([label for instant in trueSeq for label in instant])
 
 
 def main():
     parser = argparse.ArgumentParser(description="PyTorch Object Detection Webcam Demo")
     parser.add_argument(
         "--config-file",
-        #default="../configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml",
+        # default="../configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml",
         default="../configs/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima.yaml",
         metavar="FILE",
         help="path to config file",
@@ -423,7 +429,7 @@ def main():
         "--confidence-threshold",
         type=float,
         default=0.2,  # TODO questo parametro è importante, va scelto bene
-        #default=0.7,
+        # default=0.7,
         help="Minimum score for the prediction to be shown",
     )
     parser.add_argument(

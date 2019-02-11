@@ -1,6 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 # Set up custom environment before nearly anything else is imported
 # NOTE: this should be the first import (no not reorder)
+import json
+
 from maskrcnn_benchmark.utils.env import setup_environment  # noqa F401 isort:skip
 
 
@@ -24,6 +26,8 @@ from maskrcnn_benchmark.utils.miscellaneous import mkdir
 
 
 from bisect import bisect_left
+
+from tqdm import tqdm
 
 
 def main():
@@ -73,8 +77,8 @@ def main():
     logger.info("Collecting env info (might take some time)")
     logger.info("\n" + collect_env_info())
 
-    pthFiles = ["model_0002500.pth", "model_0005000.pth", "model_0007500.pth", "model_0010000.pth", "model_0012500.pth"]
-    #pthFiles = ["model_0002500.pth", "model_0005000.pth", "model_0007500.pth"] # per prove più veloci
+    #pthFiles = ["model_0002500.pth", "model_0005000.pth", "model_0007500.pth", "model_0010000.pth", "model_0012500.pth"]
+    pthFiles = ["model_0002500.pth", "model_0005000.pth", "model_0007500.pth"] # per prove più veloci
     assert all(pthFile.endswith(".pth") for pthFile in pthFiles)
     metrics = {}
     for pthFile in pthFiles:
@@ -114,8 +118,23 @@ def main():
                 )
             synchronize()
 
-        for output_folder, dataset_name in zip(output_folders, dataset_names):
+        for output_folder, dataset_name, data_loader_val in zip(output_folders, dataset_names, data_loaders_val):
+            AD = 0
+            truths = loadPredictionsFromJsonData(data_loader_val.dataset.coco.dataset['annotations'])
+            preds = loadPredictionsFromJson(os.path.join(output_folder, "bbox.json"), 0.7)
+
+            allkeys = set(preds.keys()).union(set(truths.keys()))
+            for image in allkeys:
+                if image not in truths or image not in preds:
+                    AD += 1
+                    continue
+                trueSeq = getLabelsSequence(*sortAnnotations(truths[image]["bboxes"], truths[image]["labels"]))
+                predSeq = getLabelsSequence(*sortAnnotations(preds[image]["bboxes"], preds[image]["labels"]))
+                AD += normalizedSequencesDistance(trueSeq, predSeq)
+            AD /= len(allkeys)
+
             results = torch.load(os.path.join(output_folder, "coco_results.pth")).results['bbox']
+            results["AD"] = AD
             for metric in results:
                 if metric not in metrics:
                     metrics[metric] = {}
@@ -142,10 +161,91 @@ def plot(metrics):
                 pointsX.insert(index, x)
                 pointsY.insert(index, metrics[metric][dataset_name][pthPrefix])
 
-            plt.plot(pointsX, pointsY)
+            plt.plot(pointsX, pointsY, label=dataset_name)
 
+        plt.legend(loc='lower right')
         plt.show()
         # TODO usare invece plt.figure per salvare su file; TODO decidere percorso file
+
+
+# ordina le annotazioni per xmin crescente
+def sortAnnotations(bboxes, labels):
+    bboxes, labels = [list(z) for z in
+                              zip(*sorted(zip(bboxes, labels), key=lambda l: l[0][0]))]
+    return bboxes, labels
+
+
+# ritorna una lista di liste di label: la lista esterna scandisce il tempo, ogni lista interna contiene le note suonate in un determinato istante (infatti possono esserci più note in contemporanea)
+def getLabelsSequence(bboxes, labels):
+    # l'ordinamento deve già essere stato fatto
+
+    assert len(bboxes) == len(labels)
+    if len(bboxes) == 0:
+        return []
+
+    # (i bbox sono in formato x1, y1, x2, y1)
+
+    sequence = []  # lista di liste di label
+    bbox = [-1, -1, -1,
+            -1]  # bbox fasullo, è comodo per non gestire la prima iterazione del ciclo con un if (perché non esiste un bbox precedente al primo)
+    for i in range(len(bboxes)):
+        previousBbox = bbox
+        bbox = bboxes[i]
+        label = labels[i]
+        if bbox[0] <= previousBbox[2]:  # bbox.x1 <= previousBbox.x2
+            # se questa annotazione sta sopra o sotto all'annotazione precedente (ovvero le note sono da suonare nello stesso istante)
+            sequence[-1].append(label)
+        else:
+            # se l'annotazione i-esima è lontana da quella precedente, metto la label in un nuovo istante di tempo
+            sequence.append([label])
+
+    return sequence
+
+
+# ritorna la distanza tra due sequenze, non normalizzata
+def sequencesDistance(trueSeq, predSeq):
+    if len(trueSeq) < len(predSeq):
+        trueSeq, predSeq = predSeq, trueSeq
+
+    if len(predSeq) == 0:
+        return len([label for instant in trueSeq for label in instant])
+
+    t = set(trueSeq[-1])  # insieme delle note nell'ultimo istante del groundtruth
+    p = set(predSeq[-1])  # insieme delle note nell'ultimo istante della predizione
+    cost = len(t - p) + len(p - t)  # numero di elementi per cui i due insiemi differiscono
+
+    # ricorsione edit-distance
+    return min([sequencesDistance(trueSeq[:-1], predSeq) + len(t),
+                sequencesDistance(trueSeq, predSeq[:-1]) + len(p),
+                sequencesDistance(trueSeq[:-1], predSeq[:-1]) + cost])
+
+
+def normalizedSequencesDistance(trueSeq, predSeq):
+    n = max(len([label for instant in trueSeq for label in instant]), len([label for instant in predSeq for label in instant]))
+    return sequencesDistance(trueSeq, predSeq) / n
+
+
+def loadPredictionsFromJsonData(js, th=None):
+    preds = {}
+    for ann in js:
+        if th is not None and ann['score'] < th:
+            continue
+        an_id = ann['image_id']
+        if an_id in preds:
+            preds[an_id]['bboxes'].append(ann['bbox'])
+            preds[an_id]['labels'].append(ann['category_id'])
+        else:
+            preds[an_id] = {}
+            preds[an_id]['bboxes'] = [ann['bbox']]
+            preds[an_id]['labels'] = [ann['category_id']]
+
+    return preds
+
+
+def loadPredictionsFromJson(jsonPath, th=0.7):
+    with open(jsonPath, "r") as jsonFile:
+        js = json.load(jsonFile)
+    return loadPredictionsFromJsonData(js, th)
 
 
 if __name__ == "__main__":
