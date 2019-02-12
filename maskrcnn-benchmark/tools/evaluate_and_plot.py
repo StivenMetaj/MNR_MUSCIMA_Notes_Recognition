@@ -78,7 +78,8 @@ def main():
     logger.info("\n" + collect_env_info())
 
     #pthFiles = ["model_0002500.pth", "model_0005000.pth", "model_0007500.pth", "model_0010000.pth", "model_0012500.pth"]
-    pthFiles = ["model_0002500.pth", "model_0005000.pth", "model_0007500.pth"] # per prove più veloci
+    #pthFiles = ["model_0002500.pth", "model_0005000.pth", "model_0007500.pth"] # per prove più veloci
+    pthFiles = [f for f in os.listdir(pthDir) if os.path.isfile(os.path.join(pthDir, f)) and f.endswith(".pth")]
     assert all(pthFile.endswith(".pth") for pthFile in pthFiles)
     metrics = {}
     for pthFile in pthFiles:
@@ -186,8 +187,7 @@ def getLabelsSequence(bboxes, labels):
     # (i bbox sono in formato x1, y1, x2, y1)
 
     sequence = []  # lista di liste di label
-    bbox = [-1, -1, -1,
-            -1]  # bbox fasullo, è comodo per non gestire la prima iterazione del ciclo con un if (perché non esiste un bbox precedente al primo)
+    bbox = [-1, -1, -1, -1]  # bbox fasullo, è comodo per non gestire la prima iterazione del ciclo con un if (perché non esiste un bbox precedente al primo)
     for i in range(len(bboxes)):
         previousBbox = bbox
         bbox = bboxes[i]
@@ -201,23 +201,29 @@ def getLabelsSequence(bboxes, labels):
 
     return sequence
 
-
+cache = {}
 # ritorna la distanza tra due sequenze, non normalizzata
 def sequencesDistance(trueSeq, predSeq):
     if len(trueSeq) < len(predSeq):
         trueSeq, predSeq = predSeq, trueSeq
 
+    seqsStr = str(trueSeq) + str(predSeq)
+    if seqsStr in cache:
+        return cache[seqsStr]
+
     if len(predSeq) == 0:
-        return len([label for instant in trueSeq for label in instant])
+        cache[seqsStr] = len([label for instant in trueSeq for label in instant])
+        return cache[seqsStr]
 
     t = set(trueSeq[-1])  # insieme delle note nell'ultimo istante del groundtruth
     p = set(predSeq[-1])  # insieme delle note nell'ultimo istante della predizione
     cost = len(t - p) + len(p - t)  # numero di elementi per cui i due insiemi differiscono
 
     # ricorsione edit-distance
-    return min([sequencesDistance(trueSeq[:-1], predSeq) + len(t),
-                sequencesDistance(trueSeq, predSeq[:-1]) + len(p),
-                sequencesDistance(trueSeq[:-1], predSeq[:-1]) + cost])
+    cache[seqsStr] = min([sequencesDistance(trueSeq[:-1], predSeq) + len(t),
+                          sequencesDistance(trueSeq, predSeq[:-1]) + len(p),
+                          sequencesDistance(trueSeq[:-1], predSeq[:-1]) + cost])
+    return cache[seqsStr]
 
 
 def normalizedSequencesDistance(trueSeq, predSeq):
