@@ -107,25 +107,6 @@ def getClassFromPositions(u, l):
     return 6 + l - u
 
 
-'''
-{
-"info" : info, "images" : [image], "annotations" : [annotation], "licenses" : [license],
-}
-
-info{
-"year" : int, "version" : str, "description" : str, "contributor" : str, "url" : str, "date_created" : datetime,
-}
-
-image{
-"id" : int, "width" : int, "height" : int, "file_name" : str, "license" : int, "flickr_url" : str, "coco_url" : str, "date_captured" : datetime,
-}
-
-license{
-"id" : int, "name" : str, "url" : str,
-}
-'''
-
-
 def classIdToName(id):
     CLASSES = (
         "__background__",
@@ -158,7 +139,6 @@ def convertToCoco(dimX, dimY, doc, outputDirImages):
 
     images = []
     annotations = []
-    # licenses = []
 
     for i, staff in enumerate(staffs):
         patches = getPatchesFromStaff(staff[0], dimX, dimY)
@@ -201,8 +181,6 @@ def convertToCoco(dimX, dimY, doc, outputDirImages):
                 if h <= 3:
                     continue
 
-                # boxes.append([l, t, l + w, t + h])
-
                 classe = None
                 if isInsideStaff(note, pentasLimits):
                     up, low = getInsideStaffNotePosition(imgStaff, note, stopValue)
@@ -211,7 +189,7 @@ def convertToCoco(dimX, dimY, doc, outputDirImages):
                     classe = "OutOfStaffs"
                     continue
 
-                area = w*h  # TODO in realtà sarebbe l'area della maschera, che per adesso non viene usata
+                area = w*h  # TODO in realtà dovrebbe essere l'area della maschera, che per adesso non viene usata
                 annotation = {"id": globalAnnotationsCounter, "image_id": globalPatchesCounter, "category_id": classe,
                               "bbox": [l, t, w, h], "iscrowd": 0, "area": area}
                 annotations.append(annotation)
@@ -259,20 +237,22 @@ def clearDirectory(directoryPath):
             print(e)
 
 
+# genera la stringa JSON che andrà salvata nel file del groundtruth
 def getJSONfromDocs(docs, outputDirImages):
     info = {"year": 2019, "version": "0.1", "description": "Coco-style annotations for muscima note recognition",
             "contributor": "Magnolfi and Metaj", "url": "https://github.com/StivenMetaj/DDM_MUSCIMA_Project",
-            "date_created": "2019/02/07"}
+            "date_created": "2019/02/07"}   # info varie sul dataset
     categories = []
     images = []
     annotations = []
-    # licenses = []
 
+    # specifico quali sono la varie classi: l'id è sempre >= 1 perché l'id 0 è riservato al background
     for id in range(1, 12):
         categories.append({"id": id, "name": classIdToName(id)})
 
     print()
     print("Converting docs...")
+    # converto ogni documento nel formato COCO, e aggiorno la lista di immagini e annotazioni
     for docID in tqdm(range(len(docs))):
         doc = docs[docID]
 
@@ -284,6 +264,7 @@ def getJSONfromDocs(docs, outputDirImages):
 
 
 def main(debug=False):
+    # TODO capire differenza tra le due cartelle contenenti il groundtruth in formato xml
     CROPOBJECT_DIR = '../data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
     # CROPOBJECT_DIR = '../data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
 
@@ -293,22 +274,21 @@ def main(debug=False):
     # per debuggare
     if debug:
         cropobject_fnames = cropobject_fnames[70:71]
+    cropobject_fnames = sorted(cropobject_fnames)   # ordino in modo da avere riproducibilità
 
     print()
     print("Reading xml annotations...")
     docs = [parse_cropobject_list(f) for f in tqdm(cropobject_fnames)]
 
-    # random shuffle with seed
-    N = len(docs)
+    # mischio casualmente documenti (uso seed per riproducibilità)
     seed = 0
-    ids = np.arange(N + 1)
-    ids = ids[1:]
     np.random.seed(seed)
-    np.random.shuffle(ids)
+    np.random.shuffle(docs)
+    random.seed(seed)   # questo seed serve per le patch casuali
 
-    # SPLIT!
-    beginValidationIndex = int(len(docs) * splitPoints[0] / 100)
-    beginTestIndex = int(len(docs) * splitPoints[1] / 100) + beginValidationIndex
+    # train/validation/test split
+    beginValidationIndex = int(len(docs) * splitPoints[0] / 100)                    # splitPoints[0] = % elementi nel train
+    beginTestIndex = int(len(docs) * splitPoints[1] / 100) + beginValidationIndex   # splitPoints[1] = % elementi nel val
 
     trainDocs = docs[:beginValidationIndex]
     valDocs = docs[beginValidationIndex:beginTestIndex]
@@ -316,6 +296,8 @@ def main(debug=False):
 
     if not checkAndClearDirectories(directories):
         return
+
+    # per ogni set, genero il corrispondente file json contenente il groundtruth in formato COCO
 
     with open(cAnnotationsDir + "/instances_train2019.json", "w") as f:
         f.write(getJSONfromDocs(trainDocs, cTrainImagesDir))
