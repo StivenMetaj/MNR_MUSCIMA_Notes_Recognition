@@ -29,16 +29,24 @@ from bisect import bisect_left
 
 from tqdm import tqdm
 
+# Use parameter DATASETS.TEST to change evaluated datasets
+# Example: DATASETS.TEST ('muscima_train', 'muscima_val')
+# Note: value specified must be a tuple and single quotes must be used
+
+# Use parameter MODEL.DEVICE to run on different device
+# Example: MODEL.DEVICE "cpu"
 
 def main():
     parser = argparse.ArgumentParser(description="PyTorch Object Detection Inference")
     parser.add_argument(
         "--config-file",
-        default="configs/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima_pretrained_imagenet.yaml",
+        # default="configs/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima_pretrained_imagenet.yaml",
+        default="configs/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima.yaml",
         metavar="FILE",
         help="path to config file",
     )
     parser.add_argument("--local_rank", type=int, default=0)
+    parser.add_argument("--gpu", type=int, default=0, help="gpu to use")
     parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
@@ -58,17 +66,19 @@ def main():
         )
         synchronize()
 
-    #cfg['MODEL'].update({"DEVICE": "cpu"})
-
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
-    pthDir = "models/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima_pretrained_imagenet"
-    #pthDir = "models" + args.config_file[len("configs"):-len(".yaml")]
-    cfg.update({"OUTPUT_DIR": pthDir})
-    cfg['DATASETS']['TEST'] = ("muscima_train", "muscima_val")
+
+    if args.config_file.startswith("configs/"):
+        # se il file di configurazione specificato sta nella cartella configs, allora determino automaticamente la cartella di output
+        pthDir = "models/" + args.config_file[len("configs/"):-len(".yaml")]
+        cfg.update({"OUTPUT_DIR": pthDir})
+    else:
+        # se il file di configurazione non sta nella cartella configs, allora l'output deve essere specificato mediante il parametro OUTPUT_DIR
+        pthDir = cfg["OUTPUT_DIR"]
+
     cfg.freeze()
 
-    #save_dir = ""
     save_dir = pthDir
     logger = setup_logger("maskrcnn_benchmark", save_dir, get_rank())
     logger.info("Using {} GPUs".format(num_gpus))
@@ -77,8 +87,6 @@ def main():
     logger.info("Collecting env info (might take some time)")
     logger.info("\n" + collect_env_info())
 
-    #pthFiles = ["model_0002500.pth", "model_0005000.pth", "model_0007500.pth", "model_0010000.pth", "model_0012500.pth"]
-    #pthFiles = ["model_0002500.pth", "model_0005000.pth", "model_0007500.pth"] # per prove più veloci
     pthFiles = [f for f in os.listdir(pthDir) if os.path.isfile(os.path.join(pthDir, f)) and f.endswith(".pth")]
     assert all(pthFile.endswith(".pth") for pthFile in pthFiles)
     metrics = {}
@@ -120,20 +128,25 @@ def main():
             synchronize()
 
         for output_folder, dataset_name, data_loader_val in zip(output_folders, dataset_names, data_loaders_val):
-            AD = 0
-            truths = loadPredictionsFromJsonData(data_loader_val.dataset.coco.dataset['annotations'])
-            preds = loadPredictionsFromJson(os.path.join(output_folder, "bbox.json"), 0.7)
 
-            allkeys = set(preds.keys()).union(set(truths.keys()))
-            for image in allkeys:
-                if image not in truths or image not in preds:
-                    AD += 1
-                    continue
-                trueSeq = getLabelsSequence(*sortAnnotations(truths[image]["bboxes"], truths[image]["labels"]))
-                predSeq = getLabelsSequence(*sortAnnotations(preds[image]["bboxes"], preds[image]["labels"]))
-                AD += normalizedSequencesDistance(trueSeq, predSeq)
-            AD /= len(allkeys)
+            avgDistFilePath = os.path.join(output_folder, "average_distance.pth")
+            if not os.path.exists(avgDistFilePath):
+                AD = 0
+                truths = loadPredictionsFromJsonData(data_loader_val.dataset.coco.dataset['annotations'])
+                preds = loadPredictionsFromJson(os.path.join(output_folder, "bbox.json"), 0.7)
 
+                allkeys = set(preds.keys()).union(set(truths.keys()))
+                for image in allkeys:
+                    if image not in truths or image not in preds:
+                        AD += 1
+                        continue
+                    trueSeq = getLabelsSequence(*sortAnnotations(truths[image]["bboxes"], truths[image]["labels"]))
+                    predSeq = getLabelsSequence(*sortAnnotations(preds[image]["bboxes"], preds[image]["labels"]))
+                    AD += normalizedSequencesDistance(trueSeq, predSeq)
+                AD /= len(allkeys)
+                torch.save(AD, avgDistFilePath)
+
+            AD = torch.load(avgDistFilePath)
             results = torch.load(os.path.join(output_folder, "coco_results.pth")).results['bbox']
             results["AD"] = AD
             for metric in results:
@@ -143,10 +156,12 @@ def main():
                     metrics[metric][dataset_name] = {}
                 metrics[metric][dataset_name][pthPrefix] = results[metric]
 
-    plot(metrics)
+    plot(metrics, os.path.join(cfg.OUTPUT_DIR, "inference"))
 
 
-def plot(metrics):
+# crea grafici e li salva in vari file .png
+def plot(metrics, path):
+    # TODO confronto varianti diverse (per ora è solo confronto dataset diversi)
     # per ogni metrica faccio un grafico
     for metric in metrics:
         plt.title(metric)
@@ -165,8 +180,8 @@ def plot(metrics):
             plt.plot(pointsX, pointsY, label=dataset_name)
 
         plt.legend(loc='lower right')
-        plt.show()
-        # TODO usare invece plt.figure per salvare su file; TODO decidere percorso file
+        plt.savefig(os.path.join(path, metric + ".png"))
+        plt.clf()
 
 
 # ordina le annotazioni per xmin crescente
@@ -200,6 +215,7 @@ def getLabelsSequence(bboxes, labels):
             sequence.append([label])
 
     return sequence
+
 
 cache = {}
 # ritorna la distanza tra due sequenze, non normalizzata
