@@ -10,11 +10,11 @@ import cv2
 
 from utils import *
 
-docDiProva = parse_cropobject_list('../data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual/'
+docDiProva = parse_cropobject_list('data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual/'
                                    'CVC-MUSCIMA_W-01_N-10_D-ideal.xml')
 
 # output dirs coco format
-cDataDir = '../data/mnr'
+cDataDir = 'data/mnr'
 cTrainImagesDir = cDataDir + '/train2019'
 cValidationImagesDir = cDataDir + '/val2019'
 cTestImagesDir = cDataDir + '/test2019'
@@ -92,8 +92,8 @@ def getResizedMeasure(startDimension, finalDimension, measure):
 def initializeImagesAndNotes(doc):
     w = doc[0].uid[31:33]
     p = doc[0].uid[36:38]
-    imgPath = "../data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
-    imgStaffPath = "../data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
+    imgPath = "data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
+    imgStaffPath = "data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
 
     img = mpimg.imread(imgPath)
     imgStaff = mpimg.imread(imgStaffPath)
@@ -265,8 +265,8 @@ def getJSONfromDocs(docs, outputDirImages):
 
 def main(debug=False):
     # TODO capire differenza tra le due cartelle contenenti il groundtruth in formato xml
-    CROPOBJECT_DIR = '../data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
-    # CROPOBJECT_DIR = '../data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
+    CROPOBJECT_DIR = 'data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual'
+    # CROPOBJECT_DIR = 'data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_withstaff'
 
     print()
     print("Reading list of xml annotations files...")
