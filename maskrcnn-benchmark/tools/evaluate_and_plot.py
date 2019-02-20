@@ -208,6 +208,27 @@ def plot_comparison_datasets(metrics, path):
 
 
 def plot_comparison_variants(metrics, path):
+    # minMaxX sarà il punto in cui "taglio" il grafico, ovvero il più piccolo tra gli estremi superiori dei domini delle varie funzioni
+    minMaxX = 999999999
+    # per ogni dataset
+    for dataset_name in metrics:
+        # per ogni metrica faccio un grafico
+        for metric in metrics[dataset_name]:
+            # per ogni variante faccio una funzione
+            for variant in metrics[dataset_name][metric]:
+                # maxX conterrà l'estremo superiore del dominio della funzione corrente
+                maxX = 0
+                # per ogni file .pth ho un punto nella funzione
+                for pthPrefix in metrics[dataset_name][metric][variant]:
+                    try:
+                        x = int(pthPrefix[-7:])             # la x del punto è il numero di iterazione
+                    except ValueError:
+                        continue
+                    if x > maxX:
+                        maxX = x
+                if maxX < minMaxX:
+                    minMaxX = maxX
+
     # per ogni dataset
     for dataset_name in metrics:
         # per ogni metrica faccio un grafico
@@ -219,7 +240,12 @@ def plot_comparison_variants(metrics, path):
                 pointsY = []
                 # per ogni file .pth ho un punto nella funzione
                 for pthPrefix in metrics[dataset_name][metric][variant]:
-                    x = int(pthPrefix[-7:])             # la x del punto è l'iterazione
+                    try:
+                        x = int(pthPrefix[-7:])             # la x del punto è il numero di iterazione
+                    except ValueError:
+                        continue
+                    if x > minMaxX:
+                        continue
                     # inserisco il punto in modo che pointsX sia ordinato per x crescente
                     index = bisect_left(pointsX, x)
                     pointsX.insert(index, x)
