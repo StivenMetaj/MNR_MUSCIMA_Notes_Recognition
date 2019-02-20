@@ -2,6 +2,8 @@ import os
 import numpy as np
 from xml.etree import cElementTree as ET
 
+''' questo file serviva per lo split nel formato VOC, ma meglio usare formato COCO, almeno con maskrcnn si possono fare tutti i test '''
+
 # GLOBAL VARIABLES
 splitDir = "data/MNR2019/ImageSets"
 layoutDir = splitDir + "/Layout"

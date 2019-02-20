@@ -16,10 +16,13 @@ from torch import Tensor
 
 from xml.dom import minidom
 
+#from muscima.io import parse_cropobject_list
+
 dataDir = 'MNR2019'
 imagesDir = dataDir + '/JPEGImages'
 annotationsDir = dataDir + '/Annotations'
 
+# TODO fare un bel refactor e ripulire ciò che non serve
 
 # Ritorna la proiezione orizzontale. In input si ha l'immagine target
 def getHorizontalProjection(img):
@@ -239,10 +242,11 @@ def getNotesPentasPositions(imgStaff, imgStaffLedgers, notesAnnotations):
         for note in staff:
             if isInsideStaff(note, pentasLimits):
                 u, l = getInsideStaffNotePosition(imgStaff, note, stopValue)
-                notesPos.append(l - u)
-            # TODO gestire fuori pentagramma (funzione outside vuota)
             else:
-                u, l = outsideStaffPosition(imgStaff, note, stopValue)
+                # TODO gestire fuori pentagramma (funzione outside vuota)
+                #u, l = getOutsideStaffPosition(imgStaffLedgers, note, stopValue)
+                continue
+            notesPos.append(l - u)
 
         notesPositions.append(notesPos)
 
@@ -316,15 +320,15 @@ def getNoteCoordinates(noteAnnotation):
 
 # Ritorna la posizione della nota all'interno del pentagramma, nel caso in cui la nota sia fuori dalle staff
 # TODO
-def outsideStaffPosition(imgStaff, annotation, stopValue):
-    return 1, 1
+def getOutsideStaffPosition(imgStaffLedgers, annotation, stopValue):
+    pass
 
 
 # questa classe adatta il dataset alla libreria facebookresearch/maskrcnn-benchmark
 # questa classe poteva forse essere evitata (visto che il formato è lo stesso di PASCAL VOC), però per adesso l'ho messa
+# AGGIORNAMENTO: questa classe era stata fatta per i file in formato VOC,
+# ma è meglio usare il formato COCO (funziona l'inferenza), per formato COCO questa classe è inutile
 class MuscimaDataset(object):
-
-    # TODO testare se funziona con la libreria facebookresearch/maskrcnn-benchmark (anche con solo pochi elementi del dataset)
 
     # numExamples serve solo per prendere un sottoinsieme del dataset (per fare le prove più velocemente): se <=0, viene preso tutto il dataset
     def __init__(self, numExamples=-1):
@@ -332,7 +336,6 @@ class MuscimaDataset(object):
         self.dataset = []
         self.labels = []
         self.boxes = []
-        self.exampleNumbers = []  # giusto per controllare che l'associazione tra immagini e annotazioni avvenga correttamente TODO rimuovere
 
         for jpgFile in os.listdir(imagesDir):
             jpg_path = os.path.join(imagesDir, jpgFile)
@@ -377,7 +380,6 @@ class MuscimaDataset(object):
                 # aggiungo le annotazioni relativi all'immagine alla lista di annotazioni
                 self.labels.append(imageLabel)
                 self.boxes.append(imageBoxes)
-                self.exampleNumbers.append(jpgFile[:-4])  # TODO rimuovere
 
                 numExamples -= 1
                 if numExamples == 0:
@@ -431,6 +433,5 @@ if __name__ == "__main__":
     # prendo un elemento a caso del dataset
     ex = md[0]
 
-    # non ci sono errori, con maskrcnn-benchmark dovrebbe funzionare
+    # non ci sono errori
     print("Example read without any error")
-    # TODO provare a fare un miniallenamento con la libreria vera e propria

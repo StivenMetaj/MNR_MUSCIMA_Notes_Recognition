@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 from conversion.utils import *
-from conversion.convert import *
+from conversion.convert_to_voc import *
 
 
 # Funzione che cicla su tutti i file xml

@@ -14,6 +14,9 @@ import cv2
 
 from conversion.utils import *
 
+''' meglio usare convert_to_coco '''
+
+
 docDiProva = parse_cropobject_list('data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual/'
                                    'CVC-MUSCIMA_W-01_N-10_D-ideal.xml')
 dataDir = 'data/MNR2019'

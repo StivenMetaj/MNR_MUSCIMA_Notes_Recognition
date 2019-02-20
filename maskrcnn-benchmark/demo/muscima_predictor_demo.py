@@ -317,14 +317,11 @@ class MuscimaDemo(object):
         return image
 
     # legge l'immagine specificata, calcola le predizioni su di essa e le visualizza
-    def visualizePredictions(self, imgPath):
+    def visualizePredictions(self, imgPath, prePredictionsSize, displaySize):
         img = cv2.imread(imgPath, cv2.IMREAD_COLOR)
         # cv2.imshow('image', img)  # scommentare se si vuole vedere l'immagine originale
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
-        prePredictionsSize = 768  # l'immagine viene riscalata a questa dimensione prima di fare le predizioni,
-        # può incidere sulla qualità delle predizioni;
-        # se messo a 128 (quindi niente ridimensionamento), le annotazioni si vedono male
         img = cv2.resize(img, (prePredictionsSize, prePredictionsSize))
         returnedPredictions = []  # questa lista viene riempita da run_on_opencv_image con le predizioni
         composite = self.run_on_opencv_image(img, returnedPredictions)
@@ -348,7 +345,6 @@ class MuscimaDemo(object):
             print("no predictions with score above threshold")
         print()
 
-        displaySize = 768  # dimensione dell'immagine visualizzata a schermo, non incide sulle predizioni
         composite = cv2.resize(composite, (displaySize, displaySize))
         # i bbox si riferiscono sempre all'immagine di dimensione prePredictionsSize x prePredictionsSize
         cv2.imshow("MUSCIMA detections", composite)
@@ -420,16 +416,15 @@ def main():
     parser = argparse.ArgumentParser(description="PyTorch Object Detection Webcam Demo")
     parser.add_argument(
         "--config-file",
-        # default="../configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml",
-        default="../configs/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima.yaml",
+        # default="../configs/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima.yaml",
+        default="../configs/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima_pretrained_imagenet.yaml",
         metavar="FILE",
         help="path to config file",
     )
     parser.add_argument(
         "--confidence-threshold",
         type=float,
-        default=0.2,  # TODO questo parametro è importante, va scelto bene
-        # default=0.7,
+        default=0.5,  # TODO questo parametro è importante, va scelto bene
         help="Minimum score for the prediction to be shown",
     )
     parser.add_argument(
@@ -474,22 +469,37 @@ def main():
         min_image_size=args.min_image_size,
     )
 
+    prePredictionsSize = 768  # l'immagine viene riscalata a questa dimensione prima di fare le predizioni,
+    # può incidere sulla qualità delle predizioni;
+    # se messo a 128 (quindi niente ridimensionamento), le annotazioni si vedono male
+
+    displaySize = 768  # dimensione dell'immagine visualizzata a schermo, non incide sulle predizioni
+    
+    imgs = ['../datasets/mnr/train2019/000000000003.jpg',
+            '../datasets/mnr/train2019/000000000009.jpg',
+            '../datasets/mnr/train2019/000000000013.jpg',
+            '../datasets/mnr/train2019/000000000028.jpg',
+            '../datasets/mnr/train2019/000000000050.jpg',
+            '../datasets/mnr/train2019/000000000059.jpg',
+            '../datasets/mnr/train2019/000000000060.jpg',
+            '../datasets/mnr/train2019/000000000079.jpg',
+            '../datasets/mnr/val2019/000000012798.jpg',
+            '../datasets/mnr/val2019/000000012909.jpg',
+            '../datasets/mnr/val2019/000000013251.jpg',
+            '../datasets/mnr/val2019/000000013300.jpg',
+            '../datasets/mnr/val2019/000000013323.jpg',
+            '../datasets/mnr/val2019/000000013400.jpg',
+            '../datasets/mnr/test2019/000000017023.jpg',
+            '../datasets/mnr/test2019/000000017123.jpg',
+            '../datasets/mnr/test2019/000000017150.jpg',
+            '../datasets/mnr/test2019/000000017223.jpg',
+            '../datasets/mnr/test2019/000000017250.jpg',
+            '../datasets/mnr/test2019/000000017400.jpg']
+
     # evaluate and show predictions for some random images
     # to close an image, press any key (don't close with mouse)
-    muscima_demo.visualizePredictions('../datasets/mnr/train2019/000000000003.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/train2019/000000000009.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/train2019/000000000013.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/train2019/000000000028.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/train2019/000000000050.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/train2019/000000000079.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/val2019/000000012798.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/val2019/000000012909.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/val2019/000000013251.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/val2019/000000013400.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/test2019/000000017023.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/test2019/000000017123.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/test2019/000000017250.jpg')
-    muscima_demo.visualizePredictions('../datasets/mnr/test2019/000000017400.jpg')
+    for img in imgs:
+        muscima_demo.visualizePredictions(img, prePredictionsSize, displaySize)
 
 
 if __name__ == "__main__":
