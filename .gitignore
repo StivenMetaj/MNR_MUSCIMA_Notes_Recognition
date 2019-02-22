@@ -2,3 +2,6 @@
 .idea
 
 data
+journal_template
+journal_template/MTT_reveyrand.tex
+journal_template/Bibliography.bib

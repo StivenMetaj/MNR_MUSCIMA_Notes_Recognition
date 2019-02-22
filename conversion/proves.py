@@ -3,6 +3,7 @@ from muscima.io import parse_cropobject_list
 import pprint as pp
 
 import matplotlib
+import matplotlib.pyplot as plt
 
 if os.environ["DISPLAY"].startswith("localhost"):  # se la GUI non è disponibile (ovvero se sono su un server)
     matplotlib.use("Agg")  # necessario per salvare immagini di matplotlib quando lo script gira su un server senza GUI
@@ -11,13 +12,16 @@ if os.environ["DISPLAY"].startswith("localhost"):  # se la GUI non è disponibil
 else:
     isGuiAvailable = True
     print("GUI found")
-import matplotlib.pyplot as plt
+
 import matplotlib.image as mpimg
 
 from conversion.utils import *
 from conversion.convert_to_voc import *
 
+#docDiProva = parse_cropobject_list('data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual/'
+#                                   'CVC-MUSCIMA_W-01_N-10_D-ideal.xml')
 
+matplotlib.use('TkAgg')
 # Funzione che cicla su tutti i file xml
 def main():
     # TODO capire differenza tra i due XML
@@ -50,8 +54,8 @@ def main():
         notesAnnotations = getOrderedNotesAnnotations(doc, imgStaff)
 
         # per plottare la proiezione orizzontale si deve prima trasformare il vettore in una lista
-        # plt.plot(sums.tolist())
-        # plt.show()
+        plt.plot(horizontalProjection.tolist())
+        plt.show()
 
         imgStaff = getPreprocessedStaffImage(imgStaff)
         imgStaffLedgers = getStaffImageWithLedgers(imgStaff, doc)
@@ -70,4 +74,12 @@ def main():
 
 # TODO usare parser
 if __name__ == "__main__":
-    main()
+    w = "01"
+    p = "10"
+    imgPath = "../data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/image/p0" + p + ".png"
+    imgStaffPath = "../data/CVCMUSCIMA/CvcMuscima-Distortions/ideal/w-" + w + "/gt/p0" + p + ".png"
+    imgStaff = mpimg.imread(imgStaffPath)
+    img = mpimg.imread(imgPath)
+    horizontalProjection = np.sum(img, axis=1)
+    plt.plot(horizontalProjection.tolist())
+    plt.show()
