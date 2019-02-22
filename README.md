@@ -112,8 +112,9 @@ Evaluated metrics:
 
 The following plots refer to evaluation on the test set.
 
-![alt-text-1](img/AD.png "Average Distance") ![alt-text-2](img/AP.png "Average Precision")
-![alt-text-1](img/AP50.png "Average Distance with IoU \>= 0.50") ![alt-text-2](img/AP75.png "Average Precision with IoU \>= 0.75")
+<img src="img/AD.png" width="420" alt="Average Distance"/>  <img src="img/AP.png" width="420" alt="Average Precision"/> 
+
+<img src="img/AP50.png" width="420" alt="Average Distance with IoU \>= 0.50"/> <img src="img/AP75.png" width="420" alt="Average Precision with IoU \>= 0.75"/> 
 
 ## Notes
 Source codes of library maskrcnn-benchmark was downloaded (on 5 February 2019) and modified when necessary.
