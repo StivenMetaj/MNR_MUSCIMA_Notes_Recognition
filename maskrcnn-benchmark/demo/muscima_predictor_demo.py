@@ -17,35 +17,35 @@ from maskrcnn_benchmark.config import cfg
 
 class MuscimaDemo(object):
     # Muscima categories for pretty print
-    CATEGORIES = [
-        "__background__",
-        "under_staffs",
-        "first_line",
-        "first_space",
-        "second_line",
-        "second_space",
-        "third_line",
-        "third_space",
-        "fourth_line",
-        "fourth_space",
-        "fifth_line",
-        "above_staffs",
-    ]
-
-    # CATEGORIES = [    # scommentare queste righe se si vuole avere delle etichette più compatte
+    # CATEGORIES = [
     #     "__background__",
-    #     "US",
-    #     "L1",
-    #     "S1",
-    #     "L2",
-    #     "S2",
-    #     "L3",
-    #     "S3",
-    #     "L4",
-    #     "S4",
-    #     "L5",
-    #     "AS",
+    #     "under_staffs",
+    #     "first_line",
+    #     "first_space",
+    #     "second_line",
+    #     "second_space",
+    #     "third_line",
+    #     "third_space",
+    #     "fourth_line",
+    #     "fourth_space",
+    #     "fifth_line",
+    #     "above_staffs",
     # ]
+
+    CATEGORIES = [    # scommentare queste righe se si vuole avere delle etichette più compatte
+        "__background__",
+        "US",
+        "L1",
+        "S1",
+        "L2",
+        "S2",
+        "L3",
+        "S3",
+        "L4",
+        "S4",
+        "L5",
+        "AS"
+    ]
 
     def __init__(
             self,
@@ -309,6 +309,9 @@ class MuscimaDemo(object):
         template = "{}: {:.2f}"
         for box, score, label in zip(boxes, scores, labels):
             x, y = box[:2]
+            phase = 2
+            if y >= phase:
+                y -= phase
             s = template.format(label, score)
             cv2.putText(
                 image, s, (x, y), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1
@@ -349,7 +352,9 @@ class MuscimaDemo(object):
         # i bbox si riferiscono sempre all'immagine di dimensione prePredictionsSize x prePredictionsSize
         cv2.imshow("MUSCIMA detections", composite)
 
-        cv2.waitKey(0)
+        # press ESC to close current image
+        while cv2.waitKey(1) != 27:
+            pass
         cv2.destroyAllWindows()
 
 
@@ -479,20 +484,34 @@ def main():
             '../datasets/mnr/train2019/000000000009.jpg',
             '../datasets/mnr/train2019/000000000013.jpg',
             '../datasets/mnr/train2019/000000000028.jpg',
+            '../datasets/mnr/train2019/000000000029.jpg',
+            '../datasets/mnr/train2019/000000000030.jpg',
+            '../datasets/mnr/train2019/000000000031.jpg',
+            '../datasets/mnr/train2019/000000000032.jpg',
             '../datasets/mnr/train2019/000000000050.jpg',
+            '../datasets/mnr/train2019/000000000055.jpg',
             '../datasets/mnr/train2019/000000000059.jpg',
             '../datasets/mnr/train2019/000000000060.jpg',
             '../datasets/mnr/train2019/000000000079.jpg',
+            '../datasets/mnr/train2019/000000000179.jpg',
+            '../datasets/mnr/train2019/000000001079.jpg',
             '../datasets/mnr/val2019/000000012798.jpg',
             '../datasets/mnr/val2019/000000012909.jpg',
             '../datasets/mnr/val2019/000000013251.jpg',
             '../datasets/mnr/val2019/000000013300.jpg',
+            '../datasets/mnr/val2019/000000013301.jpg',
+            '../datasets/mnr/val2019/000000013310.jpg',
+            '../datasets/mnr/val2019/000000013320.jpg',
             '../datasets/mnr/val2019/000000013323.jpg',
             '../datasets/mnr/val2019/000000013400.jpg',
             '../datasets/mnr/test2019/000000017023.jpg',
             '../datasets/mnr/test2019/000000017123.jpg',
             '../datasets/mnr/test2019/000000017150.jpg',
             '../datasets/mnr/test2019/000000017223.jpg',
+            '../datasets/mnr/test2019/000000017224.jpg',
+            '../datasets/mnr/test2019/000000017225.jpg',
+            '../datasets/mnr/test2019/000000017226.jpg',
+            '../datasets/mnr/test2019/000000017227.jpg',
             '../datasets/mnr/test2019/000000017250.jpg',
             '../datasets/mnr/test2019/000000017400.jpg']
 

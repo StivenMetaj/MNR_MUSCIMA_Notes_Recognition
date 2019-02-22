@@ -10,8 +10,11 @@ import cv2
 
 from utils import *
 
-docDiProva = parse_cropobject_list('data/CVCMUSCIMA/MUSCIMA++/v1.0/data/cropobjects_manual/'
-                                   'CVC-MUSCIMA_W-01_N-10_D-ideal.xml')
+''' seed for dataset conversion reproducibility  '''
+seed = 0
+
+''' size of patches: they will become patchesDim x patchesDim '''
+patchesDim = 128
 
 # output dirs coco format
 cDataDir = 'data/mnr'
@@ -27,7 +30,6 @@ globalAnnotationsCounter = 1
 # TRAIN, VALIDATION, TEST percentages
 splitPoints = [60, 20, 20]
 assert (sum(i for i in splitPoints) == 100)
-
 
 # Ritorna una lista di immagini contenenti solo le staffs, con i rispettivi OFFSET sulle y
 # In input si ha l'immagine di partenza
@@ -256,7 +258,7 @@ def getJSONfromDocs(docs, outputDirImages):
     for docID in tqdm(range(len(docs))):
         doc = docs[docID]
 
-        ims, ans = convertToCoco(128, 128, doc, outputDirImages)
+        ims, ans = convertToCoco(patchesDim, patchesDim, doc, outputDirImages)
         images.extend(ims)
         annotations.extend(ans)
 
@@ -281,7 +283,6 @@ def main(debug=False):
     docs = [parse_cropobject_list(f) for f in tqdm(cropobject_fnames)]
 
     # mischio casualmente documenti (uso seed per riproducibilità)
-    seed = 0
     np.random.seed(seed)
     np.random.shuffle(docs)
     random.seed(seed)   # questo seed serve per le patch casuali
