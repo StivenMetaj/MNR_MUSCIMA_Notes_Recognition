@@ -7,7 +7,7 @@ The aim of this project is to use Faster-RCNN to recognize notes position from t
 ## Steps to reproduce the experiments
 Open a terminal in a desired folder
 ### 1) Download the source code of this project
-`git clone https://github.com/StivenMetaj/DDM_MUSCIMA_Project.git`
+`git clone https://github.com/StivenMetaj/MNR-MUSCIMA-Note-Recognition.git`
 ### 2) Download MUSCIMA dataset
 ```bash
 # enter in the project directory (we will refer to project directory with $PROJECT_ROOT):
@@ -115,6 +115,16 @@ The following plots refer to evaluation on the test set.
 <img src="img/AverageDistance.png" width="420" alt="Average Distance"/>  <img src="img/AP.png" width="420" alt="Average Precision"/> 
 
 <img src="img/AP50.png" width="420" alt="Average Distance with IoU \>= 0.50"/> <img src="img/AP75.png" width="420" alt="Average Precision with IoU \>= 0.75"/> 
+
+## Use demo to visualize predictions on images
+Obtain a .pth file of a model by training a new one or by downloading our trained one: https://mega.nz/#!f8RzyQSA!KWzLWFTe25LuxRputcyRcrM0f0MQn_jO8hCh1TYihBg.
+
+We assume that the path of the obtained pth file is $PROJECT_ROOT/maskrcnn-benchmark/model.pth, but you can place it in any folder, changing the parameter MODEL.WEIGHT accordingly in the next command.
+Go into $PROJECT_ROOT/maskrcnn-benchmark/demo and execute:
+
+`python3 muscima_predictor_demo.py MODEL.WEIGHT "../model.pth"`
+
+Predictions are made on the images specified within the script, edit the list of images to make predictions on others.
 
 ## Notes
 Source codes of library maskrcnn-benchmark was downloaded (on 5 February 2019) and modified when necessary.
