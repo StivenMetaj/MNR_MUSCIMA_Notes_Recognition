@@ -112,7 +112,7 @@ Evaluated metrics:
 
 The following plots refer to evaluation on the test set.
 
-<img src="img/AD.jpg" width="420" alt="Average Distance"/>  <img src="img/AP.png" width="420" alt="Average Precision"/> 
+<img src="img/AverageDistance.png" width="420" alt="Average Distance"/>  <img src="img/AP.png" width="420" alt="Average Precision"/> 
 
 <img src="img/AP50.png" width="420" alt="Average Distance with IoU \>= 0.50"/> <img src="img/AP75.png" width="420" alt="Average Precision with IoU \>= 0.75"/> 
 
