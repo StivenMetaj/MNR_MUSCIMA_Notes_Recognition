@@ -96,7 +96,7 @@ python3 tools/evaluate_and_plot.py --config-file "configs/muscima/e2e_faster_rcn
 The script also create metrics comparison plots for different variants (like pretrained or non-pretrained); a variant is identified by a folder which contains the corresponding checkpoints.
 
 ```bash
-evaluate (non-pretrained vs pretrained):
+# evaluate (non-pretrained vs pretrained):
 python3 tools/evaluate_and_plot.py --output_dirs "models/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima,models/muscima/e2e_faster_rcnn_R_50_FPN_1x_muscima_pretrained_imagenet" DATASETS.TEST "('muscima_test',)" 
 ```
 
