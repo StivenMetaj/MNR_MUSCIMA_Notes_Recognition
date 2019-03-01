@@ -7,7 +7,7 @@ The aim of this project is to use Faster-RCNN to recognize notes position from t
 ## Steps to reproduce the experiments
 Open a terminal in a desired folder
 ### 1) Download the source code of this project
-`git clone https://github.com/StivenMetaj/MNR-MUSCIMA-Note-Recognition.git`
+`git clone https://github.com/StivenMetaj/MNR-MUSCIMA-Notes-Recognition.git`
 ### 2) Download MUSCIMA dataset
 ```bash
 # enter in the project directory (we will refer to project directory with $PROJECT_ROOT):
